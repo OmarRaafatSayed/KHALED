@@ -1,0 +1,36 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('discounts', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('vendor_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->string('name');
+            $table->string('code')->unique();
+            $table->enum('type', ['percentage', 'fixed', 'buy_x_get_y']);
+            $table->decimal('value', 10, 2);
+            $table->decimal('min_amount', 10, 2)->nullable();
+            $table->decimal('max_discount', 10, 2)->nullable();
+            $table->integer('usage_limit')->nullable();
+            $table->integer('used_count')->default(0);
+            $table->json('applicable_products')->nullable(); // product_ids
+            $table->json('applicable_categories')->nullable(); // category_ids
+            $table->json('conditions')->nullable(); // buy_x_get_y conditions
+            $table->boolean('is_active')->default(true);
+            $table->timestamp('starts_at');
+            $table->timestamp('expires_at');
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('discounts');
+    }
+};
