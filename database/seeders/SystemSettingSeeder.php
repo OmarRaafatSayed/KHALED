@@ -19,6 +19,13 @@ class SystemSettingSeeder extends Seeder
                 'description' => 'Website name displayed in header and emails'
             ],
             [
+                'key' => 'default_language',
+                'value' => 'en',
+                'type' => 'select',
+                'group' => 'general',
+                'description' => 'Default language for the marketplace'
+            ],
+            [
                 'key' => 'site_description',
                 'value' => 'Modern marketplace for vendors and customers',
                 'type' => 'text',

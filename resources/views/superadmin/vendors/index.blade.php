@@ -1,17 +1,17 @@
 @extends('layouts.dashboard')
 
-@section('title', 'Vendors Management')
+@section('title', __('dashboard.vendor_management'))
 
 @section('content')
 <div class="p-6">
     <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold text-gray-900">Vendors Management</h1>
+        <h1 class="text-2xl font-bold text-gray-900">{{ __('dashboard.vendor_management') }}</h1>
         <div class="flex space-x-2">
             <select class="border border-gray-300 rounded-md px-3 py-2 text-sm">
-                <option value="">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
+                <option value="">جميع الحالات</option>
+                <option value="pending">{{ __('dashboard.pending') }}</option>
+                <option value="approved">{{ __('dashboard.approved') }}</option>
+                <option value="rejected">{{ __('dashboard.rejected') }}</option>
             </select>
         </div>
     </div>
@@ -22,22 +22,22 @@
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Store
+                            المتجر
                         </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Owner
+                            المالك
                         </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Subscription
+                            {{ __('dashboard.subscription') }}
                         </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Status
+                            الحالة
                         </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Products
+                            {{ __('dashboard.products') }}
                         </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Actions
+                            الإجراءات
                         </th>
                     </tr>
                 </thead>
@@ -65,22 +65,22 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm text-gray-900">{{ $vendor->subscription->name }}</div>
-                                <div class="text-sm text-gray-500">${{ $vendor->subscription->price }}/month</div>
+                                <div class="text-sm text-gray-500">${{ $vendor->subscription->price }}/شهر</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex flex-col space-y-1">
                                     <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
                                         {{ $vendor->is_approved ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' }}">
-                                        {{ $vendor->is_approved ? 'Approved' : 'Pending' }}
+                                        {{ $vendor->is_approved ? __('dashboard.approved') : __('dashboard.pending') }}
                                     </span>
                                     <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
                                         {{ $vendor->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                        {{ $vendor->is_active ? 'Active' : 'Inactive' }}
+                                        {{ $vendor->is_active ? __('dashboard.active') : __('dashboard.inactive') }}
                                     </span>
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {{ $vendor->products_count ?? 0 }} products
+                                {{ $vendor->products_count ?? 0 }} منتج
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <div class="flex space-x-2">
@@ -89,7 +89,7 @@
                                             @csrf
                                             @method('PATCH')
                                             <button type="submit" class="text-green-600 hover:text-green-900">
-                                                Approve
+                                                {{ __('dashboard.approve') }}
                                             </button>
                                         </form>
                                     @endif
@@ -97,17 +97,17 @@
                                         @csrf
                                         @method('PATCH')
                                         <button type="submit" class="text-blue-600 hover:text-blue-900">
-                                            {{ $vendor->is_active ? 'Deactivate' : 'Activate' }}
+                                            {{ $vendor->is_active ? __('dashboard.deactivate') : __('dashboard.activate') }}
                                         </button>
                                     </form>
-                                    <a href="#" class="text-indigo-600 hover:text-indigo-900">View</a>
+                                    <a href="#" class="text-indigo-600 hover:text-indigo-900">{{ __('dashboard.view') }}</a>
                                 </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
                             <td colspan="6" class="px-6 py-4 text-center text-gray-500">
-                                No vendors found
+                                {{ __('dashboard.no_data') }}
                             </td>
                         </tr>
                     @endforelse

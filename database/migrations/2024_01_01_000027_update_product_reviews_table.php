@@ -9,11 +9,21 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('product_reviews', function (Blueprint $table) {
-            $table->json('images')->nullable()->after('comment');
-            $table->json('helpful_votes')->nullable()->after('images'); // {user_id: vote_type}
-            $table->integer('helpful_count')->default(0)->after('helpful_votes');
-            $table->boolean('is_verified_purchase')->default(false)->after('helpful_count');
-            $table->timestamp('verified_at')->nullable()->after('is_verified_purchase');
+            if (!Schema::hasColumn('product_reviews', 'images')) {
+                $table->json('images')->nullable()->after('comment');
+            }
+            if (!Schema::hasColumn('product_reviews', 'helpful_votes')) {
+                $table->json('helpful_votes')->nullable()->after('images');
+            }
+            if (!Schema::hasColumn('product_reviews', 'helpful_count')) {
+                $table->integer('helpful_count')->default(0)->after('helpful_votes');
+            }
+            if (!Schema::hasColumn('product_reviews', 'is_verified_purchase')) {
+                $table->boolean('is_verified_purchase')->default(false)->after('helpful_count');
+            }
+            if (!Schema::hasColumn('product_reviews', 'verified_at')) {
+                $table->timestamp('verified_at')->nullable()->after('is_verified_purchase');
+            }
         });
     }
 

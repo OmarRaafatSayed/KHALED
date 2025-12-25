@@ -9,6 +9,9 @@ use App\Models\Product;
 use App\Models\Order;
 use App\Models\Subscription;
 use App\Models\Role;
+use App\Models\Category;
+use App\Models\Job;
+use App\Models\WithdrawalRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -306,5 +309,182 @@ class SuperAdminController extends Controller
         $template->delete();
         
         return back()->with('success', 'Template deleted successfully');
+    }
+
+    // Discount Management
+    public function discounts()
+    {
+        $discounts = \App\Models\Discount::with('vendor.user')
+            ->latest()
+            ->paginate(20);
+        return view('superadmin.discounts.index', compact('discounts'));
+    }
+
+    public function toggleDiscount(\App\Models\Discount $discount)
+    {
+        $discount->update(['is_active' => !$discount->is_active]);
+        return back()->with('success', 'Discount status updated');
+    }
+
+    // Categories Management
+    public function categories()
+    {
+        $categories = Category::withCount('products')
+            ->orderBy('sort_order')
+            ->paginate(20);
+        return view('superadmin.categories.index', compact('categories'));
+    }
+
+    public function createCategory()
+    {
+        $parentCategories = Category::whereNull('parent_id')->get();
+        return view('superadmin.categories.create', compact('parentCategories'));
+    }
+
+    public function storeCategory(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'slug' => 'required|string|unique:categories',
+            'description' => 'nullable|string',
+            'parent_id' => 'nullable|exists:categories,id',
+            'sort_order' => 'nullable|integer'
+        ]);
+
+        Category::create($request->all());
+        return redirect()->route('superadmin.categories')->with('success', 'Category created successfully');
+    }
+
+    public function editCategory(Category $category)
+    {
+        $parentCategories = Category::whereNull('parent_id')->where('id', '!=', $category->id)->get();
+        return view('superadmin.categories.edit', compact('category', 'parentCategories'));
+    }
+
+    public function updateCategory(Request $request, Category $category)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'slug' => 'required|string|unique:categories,slug,' . $category->id,
+            'description' => 'nullable|string',
+            'parent_id' => 'nullable|exists:categories,id',
+            'sort_order' => 'nullable|integer'
+        ]);
+
+        $category->update($request->all());
+        return redirect()->route('superadmin.categories')->with('success', 'Category updated successfully');
+    }
+
+    public function deleteCategory(Category $category)
+    {
+        if ($category->products()->count() > 0) {
+            return back()->with('error', 'Cannot delete category with products');
+        }
+        
+        $category->delete();
+        return back()->with('success', 'Category deleted successfully');
+    }
+
+    public function toggleCategory(Category $category)
+    {
+        $category->update(['is_active' => !$category->is_active]);
+        return back()->with('success', 'Category status updated');
+    }
+
+    // Product Approval
+    public function pendingProducts()
+    {
+        $products = Product::where('status', 'draft')
+            ->with(['vendor.user', 'category'])
+            ->latest()
+            ->paginate(20);
+        return view('superadmin.products.pending', compact('products'));
+    }
+
+    public function approveProduct(Product $product)
+    {
+        $product->update(['status' => 'active']);
+        return back()->with('success', 'Product approved successfully');
+    }
+
+    public function rejectProduct(Product $product, Request $request)
+    {
+        $request->validate(['reason' => 'required|string']);
+        
+        $product->update([
+            'status' => 'rejected',
+            'rejection_reason' => $request->reason
+        ]);
+        
+        return back()->with('success', 'Product rejected');
+    }
+
+    // Jobs Management
+    public function jobs()
+    {
+        $jobs = Job::with(['vendor.user'])
+            ->latest()
+            ->paginate(20);
+        return view('superadmin.jobs.index', compact('jobs'));
+    }
+
+    public function approveJob(Job $job)
+    {
+        $job->update(['status' => 'active']);
+        return back()->with('success', 'Job approved successfully');
+    }
+
+    public function rejectJob(Job $job, Request $request)
+    {
+        $request->validate(['reason' => 'required|string']);
+        
+        $job->update([
+            'status' => 'rejected',
+            'rejection_reason' => $request->reason
+        ]);
+        
+        return back()->with('success', 'Job rejected');
+    }
+
+    // Wallet Management
+    public function withdrawalRequests()
+    {
+        $withdrawals = WithdrawalRequest::with(['vendor.user'])
+            ->latest()
+            ->paginate(20);
+        return view('superadmin.withdrawals.index', compact('withdrawals'));
+    }
+
+    public function approveWithdrawal(WithdrawalRequest $withdrawal)
+    {
+        $withdrawal->update([
+            'status' => 'approved',
+            'processed_at' => now()
+        ]);
+        
+        // تحديث رصيد المحفظة
+        $wallet = $withdrawal->vendor->wallet;
+        $wallet->decrement('pending_balance', $withdrawal->amount);
+        $wallet->increment('total_withdrawn', $withdrawal->amount);
+        
+        return back()->with('success', 'Withdrawal approved successfully');
+    }
+
+    public function rejectWithdrawal(WithdrawalRequest $withdrawal, Request $request)
+    {
+        $request->validate(['reason' => 'required|string']);
+        
+        $withdrawal->update([
+            'status' => 'rejected',
+            'admin_notes' => $request->reason,
+            'processed_at' => now()
+        ]);
+        
+        // إرجاع المبلغ للرصيد المتاح
+        $wallet = $withdrawal->vendor->wallet;
+        $wallet->increment('balance', $withdrawal->amount);
+        $wallet->decrement('pending_balance', $withdrawal->amount);
+        
+        return back()->with('success', 'Withdrawal rejected');
     }
 }

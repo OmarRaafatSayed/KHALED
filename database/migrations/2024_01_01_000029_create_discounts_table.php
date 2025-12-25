@@ -23,8 +23,8 @@ return new class extends Migration
             $table->json('applicable_categories')->nullable(); // category_ids
             $table->json('conditions')->nullable(); // buy_x_get_y conditions
             $table->boolean('is_active')->default(true);
-            $table->timestamp('starts_at');
-            $table->timestamp('expires_at');
+            $table->timestamp('starts_at')->nullable();
+            $table->timestamp('expires_at')->nullable();
             $table->timestamps();
         });
     }

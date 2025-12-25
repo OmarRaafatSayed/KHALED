@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             PaymentGatewaySeeder::class,
             SystemSettingSeeder::class,
             HeroSlideSeeder::class,
+            WalletSeeder::class,
         ]);
         
         // إنشاء بيانات تجريبية للخصومات

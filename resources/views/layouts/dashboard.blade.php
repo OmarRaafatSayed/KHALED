@@ -1,10 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ app()->getLocale() }}" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title') - TailAdmin Marketplace</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @if(app()->getLocale() === 'ar')
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .rtl { direction: rtl; }
+        .text-right { text-align: right; }
+        .mr-auto { margin-left: auto; margin-right: 0; }
+        .ml-auto { margin-right: auto; margin-left: 0; }
+    </style>
+    @endif
 </head>
 <body class="bg-gray-100">
     <div class="min-h-screen flex">
@@ -17,34 +26,34 @@
             <nav class="mt-6">
                 @if(auth()->user()->isSuperAdmin())
                     <a href="{{ route('superadmin.dashboard') }}" class="block px-6 py-3 text-gray-700 hover:bg-gray-100">
-                        Dashboard
+                        {{ __('dashboard.dashboard') }}
                     </a>
                     <a href="{{ route('superadmin.users') }}" class="block px-6 py-3 text-gray-700 hover:bg-gray-100">
-                        Users
+                        {{ __('dashboard.user_management') }}
                     </a>
                     <a href="{{ route('superadmin.vendors') }}" class="block px-6 py-3 text-gray-700 hover:bg-gray-100">
-                        Vendors
+                        {{ __('dashboard.vendors') }}
+                    </a>
+                    <a href="{{ route('superadmin.categories') }}" class="block px-6 py-3 text-gray-700 hover:bg-gray-100">
+                        {{ __('dashboard.categories') }}
+                    </a>
+                    <a href="{{ route('superadmin.products.pending') }}" class="block px-6 py-3 text-gray-700 hover:bg-gray-100">
+                        {{ __('dashboard.product_approval') }}
+                    </a>
+                    <a href="{{ route('superadmin.withdrawals') }}" class="block px-6 py-3 text-gray-700 hover:bg-gray-100">
+                        {{ __('dashboard.withdrawals') }}
+                    </a>
+                    <a href="{{ route('superadmin.jobs') }}" class="block px-6 py-3 text-gray-700 hover:bg-gray-100">
+                        {{ __('dashboard.jobs') }}
                     </a>
                     <a href="{{ route('superadmin.subscriptions') }}" class="block px-6 py-3 text-gray-700 hover:bg-gray-100">
-                        Subscriptions
-                    </a>
-                    <a href="{{ route('superadmin.integrations.payment-gateways') }}" class="block px-6 py-3 text-gray-700 hover:bg-gray-100">
-                        Payment Gateways
-                    </a>
-                    <a href="{{ route('superadmin.integrations.shipping-providers') }}" class="block px-6 py-3 text-gray-700 hover:bg-gray-100">
-                        Shipping Providers
+                        {{ __('dashboard.subscription') }}
                     </a>
                     <a href="{{ route('superadmin.system.settings') }}" class="block px-6 py-3 text-gray-700 hover:bg-gray-100">
-                        System Settings
+                        {{ __('dashboard.system_settings') }}
                     </a>
                     <a href="{{ route('superadmin.content.blog-posts') }}" class="block px-6 py-3 text-gray-700 hover:bg-gray-100">
-                        Blog Posts
-                    </a>
-                    <a href="{{ route('superadmin.content.hero-slides') }}" class="block px-6 py-3 text-gray-700 hover:bg-gray-100">
-                        Hero Slides
-                    </a>
-                    <a href="{{ route('superadmin.content.static-pages') }}" class="block px-6 py-3 text-gray-700 hover:bg-gray-100">
-                        Static Pages
+                        {{ __('dashboard.blog') }}
                     </a>
                 @elseif(auth()->user()->isAdmin())
                     <a href="{{ route('admin.dashboard') }}" class="block px-6 py-3 text-gray-700 hover:bg-gray-100">
@@ -61,16 +70,25 @@
                     </a>
                 @elseif(auth()->user()->isVendor())
                     <a href="{{ route('vendor.dashboard') }}" class="block px-6 py-3 text-gray-700 hover:bg-gray-100">
-                        Dashboard
+                        {{ __('dashboard.dashboard') }}
                     </a>
                     <a href="{{ route('vendor.products') }}" class="block px-6 py-3 text-gray-700 hover:bg-gray-100">
-                        Products
+                        {{ __('dashboard.products') }}
                     </a>
                     <a href="{{ route('vendor.orders') }}" class="block px-6 py-3 text-gray-700 hover:bg-gray-100">
-                        Orders
+                        {{ __('dashboard.orders') }}
+                    </a>
+                    <a href="{{ route('vendor.wallet') }}" class="block px-6 py-3 text-gray-700 hover:bg-gray-100">
+                        {{ __('dashboard.wallet') }}
+                    </a>
+                    <a href="{{ route('vendor.messages') }}" class="block px-6 py-3 text-gray-700 hover:bg-gray-100">
+                        {{ __('dashboard.messages') }}
+                    </a>
+                    <a href="{{ route('vendor.jobs') }}" class="block px-6 py-3 text-gray-700 hover:bg-gray-100">
+                        {{ __('dashboard.jobs') }}
                     </a>
                     <a href="{{ route('vendor.store.settings') }}" class="block px-6 py-3 text-gray-700 hover:bg-gray-100">
-                        Store Settings
+                        {{ __('dashboard.store_settings') }}
                     </a>
                 @endif
             </nav>
@@ -88,7 +106,7 @@
                         <form method="POST" action="{{ route('logout') }}" class="inline">
                             @csrf
                             <button type="submit" class="text-red-600 hover:text-red-800">
-                                Logout
+                                {{ __('dashboard.logout') }}
                             </button>
                         </form>
                     </div>

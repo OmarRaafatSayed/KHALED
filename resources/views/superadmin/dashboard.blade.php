@@ -1,10 +1,10 @@
 @extends('layouts.dashboard')
 
-@section('title', 'Super Admin Dashboard')
+@section('title', __('dashboard.superadmin_dashboard'))
 
 @section('content')
 <div class="p-6">
-    <h1 class="text-3xl font-bold text-gray-900 mb-8">Super Admin Dashboard</h1>
+    <h1 class="text-3xl font-bold text-gray-900 mb-8">{{ __('dashboard.superadmin_dashboard') }}</h1>
     
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -16,7 +16,7 @@
                     </svg>
                 </div>
                 <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-600">Total Users</p>
+                    <p class="text-sm font-medium text-gray-600">{{ __('dashboard.total_users') }}</p>
                     <p class="text-2xl font-bold text-gray-900">{{ $stats['total_users'] }}</p>
                 </div>
             </div>
@@ -30,7 +30,7 @@
                     </svg>
                 </div>
                 <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-600">Active Vendors</p>
+                    <p class="text-sm font-medium text-gray-600">{{ __('dashboard.active_vendors') }}</p>
                     <p class="text-2xl font-bold text-gray-900">{{ $stats['active_vendors'] }}</p>
                 </div>
             </div>
@@ -44,7 +44,7 @@
                     </svg>
                 </div>
                 <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-600">Total Products</p>
+                    <p class="text-sm font-medium text-gray-600">{{ __('dashboard.total_products') }}</p>
                     <p class="text-2xl font-bold text-gray-900">{{ $stats['total_products'] }}</p>
                 </div>
             </div>
@@ -58,7 +58,7 @@
                     </svg>
                 </div>
                 <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-600">Total Revenue</p>
+                    <p class="text-sm font-medium text-gray-600">{{ __('dashboard.total_revenue') }}</p>
                     <p class="text-2xl font-bold text-gray-900">${{ number_format($stats['total_revenue'], 2) }}</p>
                 </div>
             </div>
@@ -69,7 +69,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="bg-white rounded-lg shadow">
             <div class="p-6 border-b border-gray-200">
-                <h3 class="text-lg font-medium text-gray-900">Recent Orders</h3>
+                <h3 class="text-lg font-medium text-gray-900">{{ __('dashboard.recent_orders') }}</h3>
             </div>
             <div class="p-6">
                 @if($recentOrders->count() > 0)
@@ -93,14 +93,14 @@
                         @endforeach
                     </div>
                 @else
-                    <p class="text-gray-500">No recent orders</p>
+                    <p class="text-gray-500">{{ __('dashboard.no_recent_orders') }}</p>
                 @endif
             </div>
         </div>
 
         <div class="bg-white rounded-lg shadow">
             <div class="p-6 border-b border-gray-200">
-                <h3 class="text-lg font-medium text-gray-900">Top Vendors</h3>
+                <h3 class="text-lg font-medium text-gray-900">{{ __('dashboard.top_vendors') }}</h3>
             </div>
             <div class="p-6">
                 @if($topVendors->count() > 0)
@@ -112,13 +112,13 @@
                                     <p class="text-sm text-gray-500">{{ $vendor->user->name }}</p>
                                 </div>
                                 <div class="text-right">
-                                    <p class="text-sm font-medium text-gray-900">{{ $vendor->products_count }} products</p>
+                                    <p class="text-sm font-medium text-gray-900">{{ $vendor->products_count }} {{ __('dashboard.products_count') }}</p>
                                 </div>
                             </div>
                         @endforeach
                     </div>
                 @else
-                    <p class="text-gray-500">No vendors yet</p>
+                    <p class="text-gray-500">{{ __('dashboard.no_data') }}</p>
                 @endif
             </div>
         </div>

@@ -48,6 +48,14 @@
                                             </label>
                                         </div>
                                     
+                                    @elseif($setting->type === 'select' && $setting->key === 'default_language')
+                                        <select id="{{ $setting->key }}" 
+                                                name="settings[{{ $setting->key }}]"
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                                            <option value="en" {{ $setting->value === 'en' ? 'selected' : '' }}>English</option>
+                                            <option value="ar" {{ $setting->value === 'ar' ? 'selected' : '' }}>العربية</option>
+                                        </select>
+                                    
                                     @elseif($setting->type === 'select' && $setting->key === 'default_currency')
                                         <select id="{{ $setting->key }}" 
                                                 name="settings[{{ $setting->key }}]"
@@ -140,7 +148,7 @@
                                         <input type="text" 
                                                id="{{ $setting->key }}" 
                                                name="settings[{{ $setting->key }}]" 
-                                               value="{{ $setting->value }}"
+                                               value="{{ is_array($setting->value) ? json_encode($setting->value) : $setting->value }}"
                                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                                     @endif
                                 </div>

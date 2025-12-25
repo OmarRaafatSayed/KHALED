@@ -37,6 +37,7 @@ class VendorController extends Controller
     public function dashboard()
     {
         $vendor = auth()->user()->vendor;
+        $wallet = $vendor->wallet ?? $vendor->wallet()->create();
         
         $stats = [
             'total_products' => $vendor->products()->count(),
@@ -49,6 +50,21 @@ class VendorController extends Controller
                 ->whereMonth('created_at', now()->month)
                 ->sum('total_amount'),
             'products_left' => $vendor->subscription->product_limit - $vendor->products()->count(),
+            'unread_notifications' => \App\Models\Notification::where('user_id', auth()->id())
+                ->where('is_read', false)
+                ->count(),
+            'pending_reviews' => \App\Models\ProductReview::whereHas('product', function($q) use ($vendor) {
+                $q->where('vendor_id', $vendor->id);
+            })->where('is_approved', false)->count(),
+            'subscription_expires_in' => $vendor->subscription_expires_at->diffInDays(now()),
+            'subscription_expired' => $vendor->subscription_expires_at->isPast(),
+            'wallet_balance' => $wallet->balance,
+            'pending_balance' => $wallet->pending_balance,
+            'total_earnings' => $wallet->total_earnings,
+            'unread_messages' => \App\Models\Message::where('receiver_id', auth()->id())
+                ->where('is_read', false)
+                ->count(),
+            'active_jobs' => $vendor->jobs()->where('status', 'active')->count(),
         ];
 
         $recentOrders = $vendor->orders()
@@ -140,7 +156,8 @@ class VendorController extends Controller
             'category_id' => 'required|exists:categories,id',
             'template_id' => 'nullable|exists:product_templates,id',
             'description' => 'required|string',
-            'price' => 'required|numeric|min:0',
+            'price' => 'required|numeric|min:0.01',
+            'compare_price' => 'nullable|numeric|min:0|gt:price',
             'quantity' => 'required|integer|min:0',
             'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
             'variant_options' => 'array'
@@ -152,6 +169,36 @@ class VendorController extends Controller
         $images = [];
         if ($request->hasFile('images')) {
             $images = $this->mediaService->uploadProductImages($request->file('images'), $slug);
+        }
+
+        // معالجة بيانات المتغيرات
+        $variantOptionsData = [];
+        if ($request->has('variant_options')) {
+            foreach ($request->variant_options as $index => $option) {
+                if (!empty($option['values_text'])) {
+                    $values = [];
+                    $lines = explode("\n", $option['values_text']);
+                    foreach ($lines as $line) {
+                        $line = trim($line);
+                        if (!empty($line)) {
+                            $values[] = [
+                                'key' => strtolower(str_replace(' ', '_', $line)),
+                                'label' => $line
+                            ];
+                        }
+                    }
+                    
+                    if (!empty($values)) {
+                        $variantOptionsData[] = [
+                            'name' => $option['name'],
+                            'type' => $option['type'],
+                            'values' => $values,
+                            'is_required' => isset($option['is_required']),
+                            'sort_order' => $index
+                        ];
+                    }
+                }
+            }
         }
 
         $productData = [
@@ -180,8 +227,8 @@ class VendorController extends Controller
         $product = $vendor->products()->create($productData);
 
         // إنشاء خيارات المتغيرات
-        if ($request->has('variant_options') && !empty($request->variant_options)) {
-            $this->templateService->createVariantOptions($product, $request->variant_options);
+        if (!empty($variantOptionsData)) {
+            $this->templateService->createVariantOptions($product, $variantOptionsData);
             
             // توليد المتغيرات تلقائياً
             $combinations = $this->templateService->generateVariantCombinations($product);
@@ -363,5 +410,247 @@ class VendorController extends Controller
         $discount->update(['is_active' => !$discount->is_active]);
         
         return back()->with('success', 'Discount status updated');
+    }
+    
+    public function editDiscount(\App\Models\Discount $discount)
+    {
+        if ($discount->vendor_id !== auth()->user()->vendor->id) {
+            abort(403);
+        }
+        
+        return view('vendor.discounts.edit', compact('discount'));
+    }
+    
+    public function updateDiscount(Request $request, \App\Models\Discount $discount)
+    {
+        if ($discount->vendor_id !== auth()->user()->vendor->id) {
+            abort(403);
+        }
+        
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'code' => 'required|string|unique:discounts,code,' . $discount->id,
+            'type' => 'required|in:percentage,fixed',
+            'value' => 'required|numeric|min:0',
+            'min_amount' => 'nullable|numeric|min:0',
+            'max_discount' => 'nullable|numeric|min:0',
+            'usage_limit' => 'nullable|integer|min:1',
+            'starts_at' => 'required|date',
+            'expires_at' => 'required|date|after:starts_at'
+        ]);
+        
+        $discount->update($request->all());
+        
+        return redirect()->route('vendor.discounts')
+            ->with('success', 'Discount updated successfully');
+    }
+    
+    public function deleteDiscount(\App\Models\Discount $discount)
+    {
+        if ($discount->vendor_id !== auth()->user()->vendor->id) {
+            abort(403);
+        }
+        
+        $discount->delete();
+        
+        return back()->with('success', 'Discount deleted successfully');
+    }
+    
+    // Reviews Management
+    public function reviews()
+    {
+        $vendor = auth()->user()->vendor;
+        
+        $reviews = \App\Models\ProductReview::whereHas('product', function($q) use ($vendor) {
+            $q->where('vendor_id', $vendor->id);
+        })->with(['product', 'user'])->latest()->paginate(20);
+        
+        return view('vendor.reviews.index', compact('reviews'));
+    }
+    
+    public function approveReview(\App\Models\ProductReview $review)
+    {
+        if ($review->product->vendor_id !== auth()->user()->vendor->id) {
+            abort(403);
+        }
+        
+        $review->update(['is_approved' => true]);
+        return back()->with('success', 'Review approved successfully');
+    }
+    
+    public function replyToReview(\App\Models\ProductReview $review, Request $request)
+    {
+        if ($review->product->vendor_id !== auth()->user()->vendor->id) {
+            abort(403);
+        }
+        
+        $request->validate(['reply' => 'required|string|max:1000']);
+        
+        \App\Models\ReviewReply::create([
+            'review_id' => $review->id,
+            'user_id' => auth()->id(),
+            'reply' => $request->reply
+        ]);
+        
+        return back()->with('success', 'Reply added successfully');
+    }
+    
+    // Notifications
+    public function notifications()
+    {
+        $notifications = \App\Models\Notification::where('user_id', auth()->id())
+            ->latest()
+            ->paginate(20);
+            
+        return view('vendor.notifications.index', compact('notifications'));
+    }
+    
+    public function markNotificationsRead()
+    {
+        \App\Models\Notification::where('user_id', auth()->id())
+            ->where('is_read', false)
+            ->update(['is_read' => true, 'read_at' => now()]);
+            
+        return back()->with('success', 'All notifications marked as read');
+    }
+    
+    // Subscription Management
+    public function subscription()
+    {
+        $vendor = auth()->user()->vendor;
+        $subscription = $vendor->subscription;
+        $availableSubscriptions = \App\Models\Subscription::where('is_active', true)->get();
+        
+        return view('vendor.subscription.index', compact('vendor', 'subscription', 'availableSubscriptions'));
+    }
+    
+    public function upgradeSubscription(Request $request)
+    {
+        $vendor = auth()->user()->vendor;
+        
+        $request->validate([
+            'subscription_id' => 'required|exists:subscriptions,id'
+        ]);
+        
+        $newSubscription = \App\Models\Subscription::findOrFail($request->subscription_id);
+        
+        // تحديث اشتراك التاجر
+        $vendor->update([
+            'subscription_id' => $newSubscription->id,
+            'subscription_expires_at' => now()->addDays($newSubscription->duration_days)
+        ]);
+        
+        return back()->with('success', 'Subscription updated successfully! Your new plan is now active.');
+    }
+    
+    // Financial Reports
+    public function reports()
+    {
+        $vendor = auth()->user()->vendor;
+        
+        $monthlyRevenue = $vendor->orders()
+            ->where('payment_status', 'paid')
+            ->selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, SUM(total_amount) as revenue')
+            ->groupBy('year', 'month')
+            ->orderBy('year', 'desc')
+            ->orderBy('month', 'desc')
+            ->take(12)
+            ->get();
+            
+        $topProducts = $vendor->products()
+            ->withSum('orderItems', 'quantity')
+            ->withSum('orderItems', 'price')
+            ->orderBy('order_items_sum_quantity', 'desc')
+            ->take(10)
+            ->get();
+            
+        return view('vendor.reports.index', compact('monthlyRevenue', 'topProducts'));
+    }
+    
+    // Blog Management
+    public function blog()
+    {
+        $vendor = auth()->user()->vendor;
+        
+        $posts = \App\Models\BlogPost::where('author_id', auth()->id())
+            ->latest()
+            ->paginate(20);
+            
+        return view('vendor.blog.index', compact('posts'));
+    }
+    
+    public function createBlogPost()
+    {
+        return view('vendor.blog.create');
+    }
+    
+    public function storeBlogPost(Request $request)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'content' => 'required|string',
+            'excerpt' => 'nullable|string|max:500',
+            'featured_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+        ]);
+        
+        $data = $request->only(['title', 'content', 'excerpt']);
+        $data['author_id'] = auth()->id();
+        $data['slug'] = \Illuminate\Support\Str::slug($request->title) . '-' . \Illuminate\Support\Str::random(6);
+        $data['status'] = 'pending'; // يحتاج موافقة الأدمن
+        
+        if ($request->hasFile('featured_image')) {
+            $data['featured_image'] = $request->file('featured_image')->store('blog', 'public');
+        }
+        
+        \App\Models\BlogPost::create($data);
+        
+        return redirect()->route('vendor.blog')
+            ->with('success', 'Blog post created successfully. It will be reviewed by admin.');
+    }
+    
+    public function editBlogPost(\App\Models\BlogPost $post)
+    {
+        if ($post->author_id !== auth()->id()) {
+            abort(403);
+        }
+        
+        return view('vendor.blog.edit', compact('post'));
+    }
+    
+    public function updateBlogPost(Request $request, \App\Models\BlogPost $post)
+    {
+        if ($post->author_id !== auth()->id()) {
+            abort(403);
+        }
+        
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'content' => 'required|string',
+            'excerpt' => 'nullable|string|max:500',
+            'featured_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+        ]);
+        
+        $data = $request->only(['title', 'content', 'excerpt']);
+        $data['status'] = 'pending'; // يحتاج موافقة مرة أخرى بعد التعديل
+        
+        if ($request->hasFile('featured_image')) {
+            $data['featured_image'] = $request->file('featured_image')->store('blog', 'public');
+        }
+        
+        $post->update($data);
+        
+        return redirect()->route('vendor.blog')
+            ->with('success', 'Blog post updated successfully. It will be reviewed by admin.');
+    }
+    
+    public function deleteBlogPost(\App\Models\BlogPost $post)
+    {
+        if ($post->author_id !== auth()->id()) {
+            abort(403);
+        }
+        
+        $post->delete();
+        
+        return back()->with('success', 'Blog post deleted successfully.');
     }
 }

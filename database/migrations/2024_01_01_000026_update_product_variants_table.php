@@ -9,9 +9,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('product_variants', function (Blueprint $table) {
-            $table->json('variant_options')->after('attributes'); // خيارات المتغير (لون: أحمر، مقاس: كبير)
-            $table->json('images')->nullable()->after('variant_options'); // صور خاصة بالمتغير
-            $table->string('barcode')->nullable()->after('sku');
+            if (!Schema::hasColumn('product_variants', 'variant_options')) {
+                $table->json('variant_options')->after('attributes');
+            }
+            if (!Schema::hasColumn('product_variants', 'images')) {
+                $table->json('images')->nullable()->after('variant_options');
+            }
+            if (!Schema::hasColumn('product_variants', 'barcode')) {
+                $table->string('barcode')->nullable()->after('sku');
+            }
         });
     }
 

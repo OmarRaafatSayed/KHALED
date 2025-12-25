@@ -51,7 +51,7 @@ class UserSeeder extends Seeder
         $vendorUser = User::firstOrCreate(
             ['email' => 'vendor@tailadmin.com'],
             [
-                'name' => 'Test Vendor',
+                'name' => 'Ahmed Vendor',
                 'password' => Hash::make('password'),
                 'phone' => '+1234567892',
                 'is_active' => true,
@@ -70,8 +70,8 @@ class UserSeeder extends Seeder
             Vendor::create([
                 'user_id' => $vendorUser->id,
                 'subscription_id' => $freeSubscription->id,
-                'store_name' => 'Test Store',
-                'store_slug' => 'test-store',
+                'store_name' => 'Ahmed Store',
+                'store_slug' => 'ahmed-store',
                 'store_description' => 'This is a test store for demonstration purposes.',
                 'phone' => '+1234567892',
                 'address' => '123 Test Street, Test City',

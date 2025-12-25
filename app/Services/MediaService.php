@@ -59,15 +59,14 @@ class MediaService
             'paths' => []
         ];
 
-        // حفظ الصورة الأصلية
+        // حفظ الصورة الأصلية فقط
         $originalPath = "{$basePath}/original/{$filename}";
         Storage::disk('public')->putFileAs("{$basePath}/original", $file, $filename);
         $imageData['paths']['original'] = $originalPath;
-
-        // إنشاء الأحجام المختلفة
+        
+        // نسخ نفس المسار لجميع الأحجام مؤقتاً
         foreach ($this->imageSizes as $sizeName => $dimensions) {
-            $resizedPath = $this->createResizedImage($file, $basePath, $filename, $sizeName, $dimensions);
-            $imageData['paths'][$sizeName] = $resizedPath;
+            $imageData['paths'][$sizeName] = $originalPath;
         }
 
         return $imageData;

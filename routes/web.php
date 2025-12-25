@@ -6,6 +6,9 @@ use App\Http\Controllers\SuperAdmin\SuperAdminController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Vendor\VendorController;
 use App\Http\Controllers\Vendor\VendorSetupController;
+use App\Http\Controllers\Vendor\WalletController;
+use App\Http\Controllers\Vendor\MessageController;
+use App\Http\Controllers\Vendor\JobController;
 use App\Http\Controllers\Auth\AuthController;
 
 // Authentication Routes
@@ -66,6 +69,30 @@ Route::middleware(['auth', 'role:super-admin'])->prefix('superadmin')->name('sup
     Route::post('/content/hero-slides', [SuperAdminController::class, 'storeHeroSlide'])->name('content.hero-slides.store');
     Route::get('/content/blog-comments', [SuperAdminController::class, 'blogComments'])->name('content.blog-comments');
     
+    // Categories Management
+    Route::get('/categories', [SuperAdminController::class, 'categories'])->name('categories');
+    Route::get('/categories/create', [SuperAdminController::class, 'createCategory'])->name('categories.create');
+    Route::post('/categories', [SuperAdminController::class, 'storeCategory'])->name('categories.store');
+    Route::get('/categories/{category}/edit', [SuperAdminController::class, 'editCategory'])->name('categories.edit');
+    Route::patch('/categories/{category}', [SuperAdminController::class, 'updateCategory'])->name('categories.update');
+    Route::delete('/categories/{category}', [SuperAdminController::class, 'deleteCategory'])->name('categories.delete');
+    Route::patch('/categories/{category}/toggle', [SuperAdminController::class, 'toggleCategory'])->name('categories.toggle');
+    
+    // Product Approval
+    Route::get('/products/pending', [SuperAdminController::class, 'pendingProducts'])->name('products.pending');
+    Route::patch('/products/{product}/approve', [SuperAdminController::class, 'approveProduct'])->name('products.approve');
+    Route::patch('/products/{product}/reject', [SuperAdminController::class, 'rejectProduct'])->name('products.reject');
+    
+    // Jobs Management
+    Route::get('/jobs', [SuperAdminController::class, 'jobs'])->name('jobs');
+    Route::patch('/jobs/{job}/approve', [SuperAdminController::class, 'approveJob'])->name('jobs.approve');
+    Route::patch('/jobs/{job}/reject', [SuperAdminController::class, 'rejectJob'])->name('jobs.reject');
+    
+    // Wallet Management
+    Route::get('/withdrawals', [SuperAdminController::class, 'withdrawalRequests'])->name('withdrawals');
+    Route::patch('/withdrawals/{withdrawal}/approve', [SuperAdminController::class, 'approveWithdrawal'])->name('withdrawals.approve');
+    Route::patch('/withdrawals/{withdrawal}/reject', [SuperAdminController::class, 'rejectWithdrawal'])->name('withdrawals.reject');
+    
     // Product Templates Management
     Route::get('/templates', [SuperAdminController::class, 'productTemplates'])->name('templates.index');
     Route::get('/templates/create', [SuperAdminController::class, 'createTemplate'])->name('templates.create');
@@ -73,6 +100,10 @@ Route::middleware(['auth', 'role:super-admin'])->prefix('superadmin')->name('sup
     Route::get('/templates/{template}/edit', [SuperAdminController::class, 'editTemplate'])->name('templates.edit');
     Route::patch('/templates/{template}', [SuperAdminController::class, 'updateTemplate'])->name('templates.update');
     Route::delete('/templates/{template}', [SuperAdminController::class, 'deleteTemplate'])->name('templates.delete');
+    
+    // Discount Management
+    Route::get('/discounts', [SuperAdminController::class, 'discounts'])->name('discounts');
+    Route::patch('/discounts/{discount}/toggle', [SuperAdminController::class, 'toggleDiscount'])->name('discounts.toggle');
 });
 
 // Admin Routes
@@ -130,6 +161,9 @@ Route::middleware(['auth', 'vendor'])->prefix('vendor')->name('vendor.')->group(
     Route::get('/discounts', [VendorController::class, 'discounts'])->name('discounts');
     Route::get('/discounts/create', [VendorController::class, 'createDiscount'])->name('discounts.create');
     Route::post('/discounts', [VendorController::class, 'storeDiscount'])->name('discounts.store');
+    Route::get('/discounts/{discount}/edit', [VendorController::class, 'editDiscount'])->name('discounts.edit');
+    Route::patch('/discounts/{discount}', [VendorController::class, 'updateDiscount'])->name('discounts.update');
+    Route::delete('/discounts/{discount}', [VendorController::class, 'deleteDiscount'])->name('discounts.delete');
     Route::patch('/discounts/{discount}/toggle', [VendorController::class, 'toggleDiscount'])->name('discounts.toggle');
     
     // Product Templates AJAX
@@ -139,6 +173,52 @@ Route::middleware(['auth', 'vendor'])->prefix('vendor')->name('vendor.')->group(
             'fields' => $template->getFieldsForForm()
         ]);
     })->name('templates.fields');
+    
+    // Reviews Management
+    Route::get('/reviews', [VendorController::class, 'reviews'])->name('reviews');
+    Route::patch('/reviews/{review}/approve', [VendorController::class, 'approveReview'])->name('reviews.approve');
+    Route::post('/reviews/{review}/reply', [VendorController::class, 'replyToReview'])->name('reviews.reply');
+    
+    // Notifications
+    Route::get('/notifications', [VendorController::class, 'notifications'])->name('notifications');
+    Route::patch('/notifications/mark-read', [VendorController::class, 'markNotificationsRead'])->name('notifications.mark-read');
+    
+    // Subscription Management
+    Route::get('/subscription', [VendorController::class, 'subscription'])->name('subscription');
+    Route::post('/subscription/upgrade', [VendorController::class, 'upgradeSubscription'])->name('subscription.upgrade');
+    
+    // Financial Reports
+    Route::get('/reports', [VendorController::class, 'reports'])->name('reports');
+    
+    // Blog Management
+    Route::get('/blog', [VendorController::class, 'blog'])->name('blog');
+    Route::get('/blog/create', [VendorController::class, 'createBlogPost'])->name('blog.create');
+    Route::post('/blog', [VendorController::class, 'storeBlogPost'])->name('blog.store');
+    Route::get('/blog/{post}/edit', [VendorController::class, 'editBlogPost'])->name('blog.edit');
+    Route::patch('/blog/{post}', [VendorController::class, 'updateBlogPost'])->name('blog.update');
+    Route::delete('/blog/{post}', [VendorController::class, 'deleteBlogPost'])->name('blog.delete');
+    
+    // Wallet Management
+    Route::get('/wallet', [WalletController::class, 'index'])->name('wallet');
+    Route::get('/wallet/withdrawal', [WalletController::class, 'requestWithdrawal'])->name('wallet.withdrawal');
+    Route::post('/wallet/withdrawal', [WalletController::class, 'submitWithdrawal'])->name('wallet.withdrawal.submit');
+    Route::get('/wallet/withdrawals', [WalletController::class, 'withdrawalHistory'])->name('wallet.withdrawals');
+    
+    // Messages
+    Route::get('/messages', [MessageController::class, 'index'])->name('messages');
+    Route::get('/messages/{user}', [MessageController::class, 'show'])->name('messages.show');
+    Route::post('/messages', [MessageController::class, 'store'])->name('messages.store');
+    Route::get('/messages/unread/count', [MessageController::class, 'unreadCount'])->name('messages.unread-count');
+    
+    // Jobs Management
+    Route::get('/jobs', [JobController::class, 'index'])->name('jobs');
+    Route::get('/jobs/create', [JobController::class, 'create'])->name('jobs.create');
+    Route::post('/jobs', [JobController::class, 'store'])->name('jobs.store');
+    Route::get('/jobs/{job}', [JobController::class, 'show'])->name('jobs.show');
+    Route::get('/jobs/{job}/edit', [JobController::class, 'edit'])->name('jobs.edit');
+    Route::patch('/jobs/{job}', [JobController::class, 'update'])->name('jobs.update');
+    Route::delete('/jobs/{job}', [JobController::class, 'destroy'])->name('jobs.destroy');
+    Route::patch('/jobs/{job}/toggle-status', [JobController::class, 'toggleStatus'])->name('jobs.toggle-status');
 });
 
 // Default Dashboard Route (will redirect based on user role)
