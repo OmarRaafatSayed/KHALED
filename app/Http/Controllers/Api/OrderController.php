@@ -2,35 +2,31 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
-class OrderController extends Controller
+class OrderController extends BaseApiController
 {
     public function index(Request $request)
     {
-        $orders = auth()->user()->orders()
-            ->with(['vendor.user', 'items.product'])
-            ->when($request->status, function($query, $status) {
-                return $query->where('status', $status);
-            })
-            ->latest()
+        $orders = Order::with(['items.product', 'vendor.user'])
+            ->where('user_id', $request->user()->id)
+            ->orderBy('created_at', 'desc')
             ->paginate(20);
 
-        return response()->json([
-            'success' => true,
-            'data' => $orders->items(),
-            'pagination' => [
-                'current_page' => $orders->currentPage(),
-                'last_page' => $orders->lastPage(),
-                'per_page' => $orders->perPage(),
-                'total' => $orders->total(),
-            ]
-        ]);
+        return $this->paginated($orders, 'Orders retrieved successfully');
+    }
+
+    public function show($id, Request $request)
+    {
+        $order = Order::with(['items.product', 'vendor.user'])
+            ->where('user_id', $request->user()->id)
+            ->findOrFail($id);
+
+        return $this->success($order, 'Order retrieved successfully');
     }
 
     public function store(Request $request)
@@ -38,135 +34,88 @@ class OrderController extends Controller
         $request->validate([
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
-            'items.*.variant_id' => 'nullable|exists:product_variants,id',
             'items.*.quantity' => 'required|integer|min:1',
+            'items.*.variant_id' => 'nullable|exists:product_variants,id',
             'shipping_address' => 'required|array',
-            'billing_address' => 'required|array',
+            'payment_method' => 'required|string'
         ]);
 
-        $subtotal = 0;
-        $orderItems = [];
+        DB::beginTransaction();
+        try {
+            $totalAmount = 0;
+            $orderItems = [];
 
-        // Calculate totals and prepare order items
-        foreach ($request->items as $item) {
-            $product = Product::find($item['product_id']);
-            
-            if ($product->status !== 'active') {
-                return response()->json([
-                    'success' => false,
-                    'message' => "Product {$product->name} is not available"
-                ], 400);
-            }
+            // Calculate total and prepare items
+            foreach ($request->items as $item) {
+                $product = Product::findOrFail($item['product_id']);
+                
+                if ($product->quantity < $item['quantity']) {
+                    return $this->error("Insufficient stock for product: {$product->name}");
+                }
 
-            $price = $product->price;
-            $total = $price * $item['quantity'];
-            $subtotal += $total;
+                $price = $product->price;
+                $subtotal = $price * $item['quantity'];
+                $totalAmount += $subtotal;
 
-            $orderItems[] = [
-                'product_id' => $product->id,
-                'product_variant_id' => $item['variant_id'] ?? null,
-                'quantity' => $item['quantity'],
-                'price' => $price,
-                'total' => $total,
-                'product_snapshot' => [
-                    'name' => $product->name,
-                    'price' => $product->price,
-                    'images' => $product->images,
-                ]
-            ];
-        }
-
-        // Group by vendor
-        $vendorOrders = [];
-        foreach ($orderItems as $item) {
-            $product = Product::find($item['product_id']);
-            $vendorId = $product->vendor_id;
-            
-            if (!isset($vendorOrders[$vendorId])) {
-                $vendorOrders[$vendorId] = [
-                    'items' => [],
-                    'subtotal' => 0
+                $orderItems[] = [
+                    'product_id' => $product->id,
+                    'quantity' => $item['quantity'],
+                    'price' => $price,
+                    'variant_id' => $item['variant_id'] ?? null
                 ];
+
+                // Update product quantity
+                $product->decrement('quantity', $item['quantity']);
             }
-            
-            $vendorOrders[$vendorId]['items'][] = $item;
-            $vendorOrders[$vendorId]['subtotal'] += $item['total'];
-        }
 
-        $createdOrders = [];
-
-        // Create separate orders for each vendor
-        foreach ($vendorOrders as $vendorId => $vendorOrder) {
+            // Create order
             $order = Order::create([
-                'user_id' => auth()->id(),
-                'vendor_id' => $vendorId,
-                'order_number' => 'ORD-' . strtoupper(Str::random(8)),
+                'user_id' => $request->user()->id,
+                'vendor_id' => Product::find($request->items[0]['product_id'])->vendor_id,
+                'order_number' => 'ORD-' . strtoupper(uniqid()),
                 'status' => 'pending',
                 'payment_status' => 'pending',
-                'shipping_status' => 'pending',
-                'subtotal' => $vendorOrder['subtotal'],
-                'tax_amount' => 0,
-                'shipping_amount' => 0,
-                'discount_amount' => 0,
-                'total_amount' => $vendorOrder['subtotal'],
-                'currency' => 'USD',
+                'payment_method' => $request->payment_method,
+                'subtotal' => $totalAmount,
+                'tax_amount' => $totalAmount * 0.1, // 10% tax
+                'shipping_cost' => 10, // Fixed shipping
+                'total_amount' => $totalAmount + ($totalAmount * 0.1) + 10,
                 'shipping_address' => $request->shipping_address,
-                'billing_address' => $request->billing_address,
+                'billing_address' => $request->billing_address ?? $request->shipping_address
             ]);
 
             // Create order items
-            foreach ($vendorOrder['items'] as $item) {
+            foreach ($orderItems as $item) {
                 $order->items()->create($item);
             }
 
-            $createdOrders[] = $order->load(['vendor.user', 'items.product']);
-        }
+            DB::commit();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Orders created successfully',
-            'data' => $createdOrders
-        ], 201);
+            return $this->success(
+                $order->load(['items.product', 'vendor.user']),
+                'Order created successfully',
+                201
+            );
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            return $this->error('Failed to create order: ' . $e->getMessage());
+        }
     }
 
-    public function show(Order $order)
+    public function cancel($id, Request $request)
     {
-        if ($order->user_id !== auth()->id()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Order not found'
-            ], 404);
-        }
-
-        $order->load(['vendor.user', 'items.product']);
-
-        return response()->json([
-            'success' => true,
-            'data' => $order
-        ]);
-    }
-
-    public function cancel(Order $order)
-    {
-        if ($order->user_id !== auth()->id()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Order not found'
-            ], 404);
-        }
-
-        if (!in_array($order->status, ['pending', 'confirmed'])) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Order cannot be cancelled'
-            ], 400);
-        }
+        $order = Order::where('user_id', $request->user()->id)
+            ->where('status', 'pending')
+            ->findOrFail($id);
 
         $order->update(['status' => 'cancelled']);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Order cancelled successfully'
-        ]);
+        // Restore product quantities
+        foreach ($order->items as $item) {
+            $item->product->increment('quantity', $item->quantity);
+        }
+
+        return $this->success($order, 'Order cancelled successfully');
     }
 }

@@ -2,104 +2,93 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Category;
 use Illuminate\Http\Request;
 
-class ProductController extends Controller
+class ProductController extends BaseApiController
 {
     public function index(Request $request)
     {
-        $query = Product::with(['vendor.user', 'category', 'reviews'])
+        $query = Product::with(['category', 'vendor.user', 'variants'])
             ->where('status', 'active');
 
         // Filters
-        if ($request->has('category')) {
-            $query->where('category_id', $request->category);
+        if ($request->category_id) {
+            $query->where('category_id', $request->category_id);
         }
 
-        if ($request->has('vendor')) {
-            $query->where('vendor_id', $request->vendor);
+        if ($request->vendor_id) {
+            $query->where('vendor_id', $request->vendor_id);
         }
 
-        if ($request->has('search')) {
+        if ($request->search) {
             $query->where('name', 'like', '%' . $request->search . '%');
         }
 
-        if ($request->has('min_price')) {
+        if ($request->min_price) {
             $query->where('price', '>=', $request->min_price);
         }
 
-        if ($request->has('max_price')) {
+        if ($request->max_price) {
             $query->where('price', '<=', $request->max_price);
         }
 
         // Sorting
-        $sortBy = $request->get('sort_by', 'created_at');
-        $sortOrder = $request->get('sort_order', 'desc');
-        
-        if (in_array($sortBy, ['name', 'price', 'created_at'])) {
-            $query->orderBy($sortBy, $sortOrder);
-        }
+        $sortBy = $request->sort_by ?? 'created_at';
+        $sortOrder = $request->sort_order ?? 'desc';
+        $query->orderBy($sortBy, $sortOrder);
 
-        $products = $query->paginate($request->get('per_page', 20));
+        $products = $query->paginate($request->per_page ?? 20);
 
-        return response()->json([
-            'success' => true,
-            'data' => $products->items(),
-            'pagination' => [
-                'current_page' => $products->currentPage(),
-                'last_page' => $products->lastPage(),
-                'per_page' => $products->perPage(),
-                'total' => $products->total(),
-            ]
-        ]);
+        return $this->paginated($products, 'Products retrieved successfully');
     }
 
-    public function show(Product $product)
+    public function show($id)
     {
-        if ($product->status !== 'active') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Product not found'
-            ], 404);
-        }
+        $product = Product::with(['category', 'vendor.user', 'variants', 'reviews.user'])
+            ->where('status', 'active')
+            ->findOrFail($id);
 
-        $product->load(['vendor.user', 'category', 'variants', 'reviews.user']);
-
-        return response()->json([
-            'success' => true,
-            'data' => $product
-        ]);
+        return $this->success($product, 'Product retrieved successfully');
     }
 
     public function categories()
     {
         $categories = Category::where('is_active', true)
-            ->with('children')
-            ->whereNull('parent_id')
+            ->withCount('products')
             ->orderBy('sort_order')
             ->get();
 
-        return response()->json([
-            'success' => true,
-            'data' => $categories
-        ]);
+        return $this->success($categories, 'Categories retrieved successfully');
     }
 
     public function featured()
     {
-        $products = Product::with(['vendor.user', 'category'])
+        $products = Product::with(['category', 'vendor.user'])
             ->where('status', 'active')
             ->where('is_featured', true)
-            ->orderBy('sort_order')
-            ->take(12)
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
             ->get();
 
-        return response()->json([
-            'success' => true,
-            'data' => $products
+        return $this->success($products, 'Featured products retrieved successfully');
+    }
+
+    public function search(Request $request)
+    {
+        $request->validate([
+            'q' => 'required|string|min:2'
         ]);
+
+        $products = Product::with(['category', 'vendor.user'])
+            ->where('status', 'active')
+            ->where(function($query) use ($request) {
+                $query->where('name', 'like', '%' . $request->q . '%')
+                      ->orWhere('description', 'like', '%' . $request->q . '%');
+            })
+            ->paginate(20);
+
+        return $this->paginated($products, 'Search results retrieved successfully');
     }
 }

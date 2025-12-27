@@ -2,108 +2,98 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
 use App\Models\ProductReview;
-use App\Services\ReviewService;
-use App\Services\MediaService;
+use App\Models\Product;
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 
-class ReviewController extends Controller
+class ReviewController extends BaseApiController
 {
-    protected ReviewService $reviewService;
-    protected MediaService $mediaService;
-
-    public function __construct(ReviewService $reviewService, MediaService $mediaService)
+    public function index($productId)
     {
-        $this->reviewService = $reviewService;
-        $this->mediaService = $mediaService;
+        $reviews = ProductReview::with(['user', 'replies.user'])
+            ->where('product_id', $productId)
+            ->where('is_approved', true)
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+
+        return $this->paginated($reviews, 'Reviews retrieved successfully');
     }
 
-    public function index(Request $request): JsonResponse
-    {
-        $productId = $request->get('product_id');
-        $reviews = $this->reviewService->getProductReviews($productId);
-        $stats = $this->reviewService->getReviewStats($productId);
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'reviews' => $reviews->items(),
-                'stats' => $stats,
-                'pagination' => [
-                    'current_page' => $reviews->currentPage(),
-                    'last_page' => $reviews->lastPage(),
-                    'total' => $reviews->total()
-                ]
-            ]
-        ]);
-    }
-
-    public function store(Request $request): JsonResponse
+    public function store(Request $request)
     {
         $request->validate([
             'product_id' => 'required|exists:products,id',
             'rating' => 'required|integer|min:1|max:5',
-            'comment' => 'required|string',
-            'images.*' => 'image|max:2048'
+            'title' => 'nullable|string|max:255',
+            'comment' => 'nullable|string',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
 
-        $data = $request->only(['product_id', 'rating', 'title', 'comment']);
-        $data['user_id'] = auth()->id();
+        // Check if user already reviewed this product
+        $existingReview = ProductReview::where('product_id', $request->product_id)
+            ->where('user_id', $request->user()->id)
+            ->first();
 
-        if ($request->hasFile('images')) {
-            $images = $this->mediaService->uploadReviewImages($request->file('images'), 0);
-            $data['images'] = $images;
+        if ($existingReview) {
+            return $this->error('You have already reviewed this product');
         }
 
-        $review = $this->reviewService->createReview($data);
+        $images = [];
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $image) {
+                $path = $image->store('reviews', 'public');
+                $images[] = $path;
+            }
+        }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Review submitted successfully',
-            'data' => $review->load('user')
-        ], 201);
+        $review = ProductReview::create([
+            'product_id' => $request->product_id,
+            'user_id' => $request->user()->id,
+            'rating' => $request->rating,
+            'title' => $request->title,
+            'comment' => $request->comment,
+            'images' => $images,
+            'is_approved' => false
+        ]);
+
+        return $this->success($review, 'Review submitted successfully. It will be reviewed by admin.', 201);
     }
 
-    public function addHelpfulVote(Request $request, ProductReview $review): JsonResponse
+    public function update($id, Request $request)
     {
+        $review = ProductReview::where('user_id', $request->user()->id)->findOrFail($id);
+
         $request->validate([
-            'type' => 'required|in:helpful,not_helpful'
+            'rating' => 'required|integer|min:1|max:5',
+            'title' => 'nullable|string|max:255',
+            'comment' => 'nullable|string'
         ]);
 
-        $success = $this->reviewService->addHelpfulVote(
-            $review->id,
-            auth()->id(),
-            $request->type
-        );
-
-        return response()->json([
-            'success' => $success,
-            'message' => $success ? 'Vote recorded' : 'Failed to record vote'
+        $review->update([
+            'rating' => $request->rating,
+            'title' => $request->title,
+            'comment' => $request->comment,
+            'is_approved' => false // Needs re-approval after edit
         ]);
+
+        return $this->success($review, 'Review updated successfully');
     }
 
-    public function reply(Request $request, ProductReview $review): JsonResponse
+    public function destroy($id, Request $request)
     {
-        $request->validate([
-            'reply' => 'required|string'
-        ]);
+        $review = ProductReview::where('user_id', $request->user()->id)->findOrFail($id);
+        $review->delete();
 
-        $isVendorReply = auth()->user()->isVendor() && 
-                        auth()->user()->vendor->id === $review->product->vendor_id;
+        return $this->success(null, 'Review deleted successfully');
+    }
 
-        $reply = $this->reviewService->addReply(
-            $review->id,
-            auth()->id(),
-            $request->reply,
-            $isVendorReply
-        );
+    public function myReviews(Request $request)
+    {
+        $reviews = ProductReview::with(['product'])
+            ->where('user_id', $request->user()->id)
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Reply added successfully',
-            'data' => $reply->load('user')
-        ], 201);
+        return $this->paginated($reviews, 'Your reviews retrieved successfully');
     }
 }

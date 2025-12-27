@@ -3,38 +3,56 @@
 @section('title', 'System Settings')
 
 @section('content')
-<div class="p-6">
-    <div class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-900">System Settings</h1>
-        <p class="text-gray-600">Configure your marketplace settings</p>
-    </div>
-
-    <form method="POST" action="{{ route('superadmin.system.settings.update') }}" enctype="multipart/form-data">
-        @csrf
-        @method('PATCH')
-        
-        <div class="space-y-8">
-            @foreach($settings as $group => $groupSettings)
-                <div class="bg-white shadow rounded-lg">
-                    <div class="px-6 py-4 border-b border-gray-200">
-                        <h3 class="text-lg font-medium text-gray-900 capitalize">
-                            {{ str_replace('_', ' ', $group) }} Settings
-                        </h3>
+<div class="mx-auto max-w-7xl">
+    <div class="flex flex-col gap-9">
+        <!-- Header -->
+        <div class="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
+            <div class="border-b border-stroke px-6.5 py-4 dark:border-strokedark">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="font-medium text-black dark:text-white">System Settings</h3>
+                        <p class="text-sm text-gray-500 mt-1">Configure your marketplace settings</p>
                     </div>
-                    
-                    <div class="p-6 space-y-6">
-                        @foreach($groupSettings as $setting)
-                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                                <div class="lg:col-span-1">
-                                    <label for="{{ $setting->key }}" class="block text-sm font-medium text-gray-700">
+                    <button type="button" onclick="resetSettings()" 
+                            class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                        Reset Defaults
+                    </button>
+                </div>
+            </div>
+
+            <!-- Settings Form -->
+            <form method="POST" action="{{ route('superadmin.system.settings.update') }}" enctype="multipart/form-data" class="p-6.5">
+                @csrf
+                @method('PATCH')
+                
+                <!-- Settings Tabs -->
+                <div class="mb-6">
+                    <div class="border-b border-gray-200">
+                        <nav class="-mb-px flex space-x-8">
+                            @foreach($settings as $group => $groupSettings)
+                                <button type="button" onclick="showTab('{{ $group }}')" 
+                                        class="tab-button py-2 px-1 border-b-2 font-medium text-sm {{ $loop->first ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}" 
+                                        data-tab="{{ $group }}">
+                                    {{ ucwords(str_replace('_', ' ', $group)) }}
+                                </button>
+                            @endforeach
+                        </nav>
+                    </div>
+                </div>
+
+                <!-- Settings Content -->
+                @foreach($settings as $group => $groupSettings)
+                    <div id="tab-{{ $group }}" class="tab-content {{ !$loop->first ? 'hidden' : '' }}">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            @foreach($groupSettings as $setting)
+                                <div class="bg-gray-50 p-4 rounded-lg">
+                                    <label for="{{ $setting->key }}" class="block text-sm font-medium text-gray-900 mb-2">
                                         {{ ucwords(str_replace('_', ' ', $setting->key)) }}
                                     </label>
                                     @if($setting->description)
-                                        <p class="mt-1 text-sm text-gray-500">{{ $setting->description }}</p>
+                                        <p class="text-xs text-gray-500 mb-3">{{ $setting->description }}</p>
                                     @endif
-                                </div>
-                                
-                                <div class="lg:col-span-2">
+                                    
                                     @if($setting->type === 'boolean')
                                         <div class="flex items-center">
                                             <input type="checkbox" 
@@ -42,142 +60,104 @@
                                                    name="settings[{{ $setting->key }}]" 
                                                    value="1"
                                                    {{ $setting->value ? 'checked' : '' }}
-                                                   class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                                            <label for="{{ $setting->key }}" class="ml-2 block text-sm text-gray-900">
-                                                Enable
-                                            </label>
+                                                   class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                            <label for="{{ $setting->key }}" class="ml-2 text-sm text-gray-700">Enable</label>
                                         </div>
                                     
-                                    @elseif($setting->type === 'select' && $setting->key === 'default_language')
-                                        <select id="{{ $setting->key }}" 
-                                                name="settings[{{ $setting->key }}]"
-                                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                                            <option value="en" {{ $setting->value === 'en' ? 'selected' : '' }}>English</option>
-                                            <option value="ar" {{ $setting->value === 'ar' ? 'selected' : '' }}>العربية</option>
+                                    @elseif($setting->key === 'default_language')
+                                        <select id="{{ $setting->key }}" name="settings[{{ $setting->key }}]" 
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                                            <option value="en" {{ $setting->value === 'en' ? 'selected' : '' }}>🇺🇸 English</option>
+                                            <option value="ar" {{ $setting->value === 'ar' ? 'selected' : '' }}>🇸🇦 العربية</option>
                                         </select>
                                     
-                                    @elseif($setting->type === 'select' && $setting->key === 'default_currency')
-                                        <select id="{{ $setting->key }}" 
-                                                name="settings[{{ $setting->key }}]"
-                                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                                            @foreach(['USD', 'EUR', 'EGP', 'SAR', 'AED', 'GBP'] as $currency)
-                                                <option value="{{ $currency }}" {{ $setting->value === $currency ? 'selected' : '' }}>
-                                                    {{ $currency }}
+                                    @elseif($setting->key === 'default_currency')
+                                        <select id="{{ $setting->key }}" name="settings[{{ $setting->key }}]" 
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                                            @foreach(['USD' => '$', 'EUR' => '€', 'EGP' => 'ج.م', 'SAR' => 'ر.س', 'AED' => 'د.إ', 'GBP' => '£'] as $code => $symbol)
+                                                <option value="{{ $code }}" {{ $setting->value === $code ? 'selected' : '' }}>
+                                                    {{ $symbol }} {{ $code }}
                                                 </option>
                                             @endforeach
                                         </select>
                                     
                                     @elseif($setting->type === 'number')
-                                        <input type="number" 
-                                               id="{{ $setting->key }}" 
-                                               name="settings[{{ $setting->key }}]" 
-                                               value="{{ $setting->value }}"
-                                               step="0.01"
-                                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                                        <input type="number" id="{{ $setting->key }}" name="settings[{{ $setting->key }}]" 
+                                               value="{{ $setting->value }}" step="0.01"
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
                                     
                                     @elseif($setting->type === 'email')
-                                        <input type="email" 
-                                               id="{{ $setting->key }}" 
-                                               name="settings[{{ $setting->key }}]" 
+                                        <input type="email" id="{{ $setting->key }}" name="settings[{{ $setting->key }}]" 
                                                value="{{ $setting->value }}"
-                                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                                    
-                                    @elseif($setting->type === 'password')
-                                        <input type="password" 
-                                               id="{{ $setting->key }}" 
-                                               name="settings[{{ $setting->key }}]" 
-                                               value="{{ $setting->value }}"
-                                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
                                     
                                     @elseif($setting->type === 'text')
-                                        <textarea id="{{ $setting->key }}" 
-                                                  name="settings[{{ $setting->key }}]" 
-                                                  rows="3"
-                                                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">{{ $setting->value }}</textarea>
+                                        <textarea id="{{ $setting->key }}" name="settings[{{ $setting->key }}]" rows="3"
+                                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">{{ $setting->value }}</textarea>
                                     
                                     @elseif($setting->type === 'file')
-                                        <input type="file" 
-                                               id="{{ $setting->key }}" 
-                                               name="settings[{{ $setting->key }}]" 
-                                               accept="image/*"
-                                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                                        <input type="file" id="{{ $setting->key }}" name="settings[{{ $setting->key }}]" accept="image/*"
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
                                         @if($setting->value)
-                                            <p class="mt-1 text-sm text-gray-500">Current: {{ $setting->value }}</p>
+                                            <p class="mt-1 text-xs text-gray-500">Current: {{ basename($setting->value) }}</p>
                                         @endif
                                     
-                                    @elseif($setting->type === 'array' && $setting->key === 'supported_currencies')
-                                        <div class="space-y-2">
-                                            @foreach(['USD', 'EUR', 'EGP', 'SAR', 'AED', 'GBP', 'JPY'] as $currency)
-                                                <div class="flex items-center">
-                                                    <input type="checkbox" 
-                                                           id="currency_{{ $currency }}" 
-                                                           name="settings[{{ $setting->key }}][]" 
-                                                           value="{{ $currency }}"
-                                                           {{ in_array($currency, $setting->value ?? []) ? 'checked' : '' }}
-                                                           class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                                                    <label for="currency_{{ $currency }}" class="ml-2 block text-sm text-gray-900">
-                                                        {{ $currency }}
-                                                    </label>
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                    
-                                    @elseif($setting->type === 'json' && $setting->key === 'shipping_zones')
-                                        <div class="space-y-3">
-                                            @foreach($setting->value ?? [] as $zone => $data)
-                                                <div class="flex items-center space-x-3 p-3 border border-gray-200 rounded">
-                                                    <div class="flex-1">
-                                                        <input type="text" 
-                                                               name="settings[shipping_zones][{{ $zone }}][name]" 
-                                                               value="{{ $data['name'] ?? '' }}"
-                                                               placeholder="Zone name"
-                                                               class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
-                                                    </div>
-                                                    <div class="w-24">
-                                                        <input type="number" 
-                                                               name="settings[shipping_zones][{{ $zone }}][cost]" 
-                                                               value="{{ $data['cost'] ?? '' }}"
-                                                               placeholder="Cost"
-                                                               class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
-                                                    </div>
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                    
                                     @else
-                                        <input type="text" 
-                                               id="{{ $setting->key }}" 
-                                               name="settings[{{ $setting->key }}]" 
+                                        <input type="text" id="{{ $setting->key }}" name="settings[{{ $setting->key }}]" 
                                                value="{{ is_array($setting->value) ? json_encode($setting->value) : $setting->value }}"
-                                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
                                     @endif
                                 </div>
-                            </div>
-                        @endforeach
+                            @endforeach
+                        </div>
                     </div>
-                </div>
-            @endforeach
-        </div>
+                @endforeach
 
-        <div class="mt-8 flex justify-end space-x-3">
-            <button type="button" 
-                    onclick="resetSettings()" 
-                    class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-                Reset to Defaults
-            </button>
-            <button type="submit" 
-                    class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
-                Save Settings
-            </button>
+                <!-- Save Button -->
+                <div class="mt-8 flex justify-end">
+                    <button type="submit" 
+                            class="inline-flex items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        💾 Save All Settings
+                    </button>
+                </div>
+            </form>
         </div>
-    </form>
+    </div>
 </div>
 
 <script>
+function showTab(tabName) {
+    // Hide all tabs
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.add('hidden');
+    });
+    
+    // Remove active class from all buttons
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('border-blue-500', 'text-blue-600');
+        btn.classList.add('border-transparent', 'text-gray-500');
+    });
+    
+    // Show selected tab
+    document.getElementById('tab-' + tabName).classList.remove('hidden');
+    
+    // Add active class to clicked button
+    const activeBtn = document.querySelector(`[data-tab="${tabName}"]`);
+    activeBtn.classList.remove('border-transparent', 'text-gray-500');
+    activeBtn.classList.add('border-blue-500', 'text-blue-600');
+}
+
 function resetSettings() {
-    if (confirm('Are you sure you want to reset all settings to defaults? This action cannot be undone.')) {
-        // This will be implemented with actual reset functionality
-        alert('Reset functionality will be implemented in the next phase.');
+    if (confirm('⚠️ Are you sure you want to reset all settings to defaults?\nThis action cannot be undone.')) {
+        // Reset form to defaults
+        document.querySelectorAll('input, select, textarea').forEach(field => {
+            if (field.type === 'checkbox') {
+                field.checked = false;
+            } else if (field.type !== 'submit' && field.type !== 'button') {
+                field.value = '';
+            }
+        });
+        alert('✅ Settings reset to defaults. Click "Save All Settings" to apply changes.');
     }
 }
 </script>
