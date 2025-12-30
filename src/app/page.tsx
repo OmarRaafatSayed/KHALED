@@ -1,65 +1,151 @@
 import Link from 'next/link'
-import Header from '@/components/Header'
+import { Button } from '@/components/ui/button'
+import { ShoppingBag, Truck, Shield, Heart } from 'lucide-react'
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-
+    <div className="min-h-screen">
       {/* Hero Section */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-gray-900 sm:text-6xl">
-            Welcome to TailAdmin
-            <span className="text-primary-600"> Marketplace</span>
-          </h1>
-          <p className="mt-6 text-lg text-gray-600 max-w-3xl mx-auto">
-            A modern marketplace platform built with Next.js and Laravel. 
-            Discover amazing products from verified vendors.
-          </p>
-          <div className="mt-10 flex items-center justify-center gap-x-6">
-            <Link href="/products" className="btn-primary text-lg px-8 py-3">
-              Browse Products
-            </Link>
-            <Link href="/register" className="btn-secondary text-lg px-8 py-3">
-              Join Now
-            </Link>
+      <section className="bg-gradient-to-r from-primary-50 to-primary-100 py-20">
+        <div className="container">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div className="space-y-8">
+              <h1 className="text-4xl lg:text-6xl font-bold text-gray-900 leading-tight">
+                اكتشف أفضل
+                <span className="text-primary block">المنتجات</span>
+                في مكان واحد
+              </h1>
+              <p className="text-lg text-gray-600 max-w-lg">
+                منصة تسوق حديثة تجمع أفضل البائعين والمنتجات عالية الجودة
+                مع تجربة تسوق سهلة وآمنة
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Button size="lg" className="text-lg px-8 py-4">
+                  <ShoppingBag className="ml-2 h-5 w-5" />
+                  تسوق الآن
+                </Button>
+                <Button variant="outline" size="lg" className="text-lg px-8 py-4">
+                  انضم كبائع
+                </Button>
+              </div>
+            </div>
+            <div className="relative">
+              <div className="bg-white rounded-2xl shadow-2xl p-8 transform rotate-3">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-gray-100 rounded-lg h-32"></div>
+                  <div className="bg-gray-200 rounded-lg h-32"></div>
+                  <div className="bg-gray-200 rounded-lg h-32"></div>
+                  <div className="bg-gray-100 rounded-lg h-32"></div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
+      </section>
 
-        {/* Features */}
-        <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="text-center">
-            <div className="bg-primary-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-              </svg>
-            </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Secure Shopping</h3>
-            <p className="text-gray-600">Shop with confidence with our secure payment system</p>
+      {/* Features Section */}
+      <section className="py-20 bg-white">
+        <div className="container">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+              لماذا تختار منصتنا؟
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              نوفر لك تجربة تسوق متميزة مع أفضل الخدمات والضمانات
+            </p>
           </div>
           
-          <div className="text-center">
-            <div className="bg-primary-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="text-center group">
+              <div className="bg-primary-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-primary-200 transition-colors">
+                <Shield className="w-10 h-10 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">تسوق آمن</h3>
+              <p className="text-gray-600">نظام دفع آمن ومضمون مع حماية كاملة لبياناتك</p>
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Fast Delivery</h3>
-            <p className="text-gray-600">Quick and reliable delivery to your doorstep</p>
-          </div>
-          
-          <div className="text-center">
-            <div className="bg-primary-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-              </svg>
+            
+            <div className="text-center group">
+              <div className="bg-primary-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-primary-200 transition-colors">
+                <Truck className="w-10 h-10 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">توصيل سريع</h3>
+              <p className="text-gray-600">توصيل سريع وموثوق إلى باب منزلك</p>
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Quality Products</h3>
-            <p className="text-gray-600">Curated products from trusted vendors</p>
+            
+            <div className="text-center group">
+              <div className="bg-primary-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-primary-200 transition-colors">
+                <Heart className="w-10 h-10 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">منتجات مميزة</h3>
+              <p className="text-gray-600">منتجات عالية الجودة من بائعين موثوقين</p>
+            </div>
+            
+            <div className="text-center group">
+              <div className="bg-primary-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-primary-200 transition-colors">
+                <ShoppingBag className="w-10 h-10 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">تجربة سهلة</h3>
+              <p className="text-gray-600">واجهة بسيطة وسهلة الاستخدام</p>
+            </div>
           </div>
         </div>
-      </main>
+      </section>
+
+      {/* Categories Section */}
+      <section className="py-20 bg-gray-50">
+        <div className="container">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+              تسوق حسب الفئة
+            </h2>
+            <p className="text-lg text-gray-600">
+              اكتشف مجموعة واسعة من المنتجات في جميع الفئات
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+            {[
+              'إلكترونيات',
+              'أزياء',
+              'منزل وحديقة',
+              'رياضة',
+              'جمال وعناية',
+              'كتب'
+            ].map((category, index) => (
+              <Link
+                key={index}
+                href={`/products?category=${category}`}
+                className="group bg-white rounded-xl p-6 text-center hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+              >
+                <div className="bg-gray-100 w-16 h-16 rounded-full mx-auto mb-4 group-hover:bg-primary-100 transition-colors"></div>
+                <h3 className="font-semibold text-gray-900 group-hover:text-primary transition-colors">
+                  {category}
+                </h3>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 bg-primary text-white">
+        <div className="container text-center">
+          <h2 className="text-3xl lg:text-4xl font-bold mb-6">
+            ابدأ رحلة التسوق الآن
+          </h2>
+          <p className="text-xl mb-8 opacity-90">
+            انضم إلى آلاف العملاء الراضين واكتشف تجربة تسوق جديدة
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button size="lg" variant="secondary" className="text-lg px-8 py-4">
+              إنشاء حساب جديد
+            </Button>
+            <Button size="lg" variant="outline" className="text-lg px-8 py-4 border-white text-white hover:bg-white hover:text-primary">
+              تصفح المنتجات
+            </Button>
+          </div>
+        </div>
+      </section>
     </div>
   )
 }

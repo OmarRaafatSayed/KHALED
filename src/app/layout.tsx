@@ -1,10 +1,11 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { Toaster } from 'react-hot-toast'
+import NewHeader from '@/components/NewHeader'
 
 export const metadata: Metadata = {
-  title: 'TailAdmin Marketplace',
-  description: 'Modern marketplace built with Next.js and Laravel',
+  title: 'TailAdmin Marketplace - منصة التجارة الإلكترونية',
+  description: 'منصة تجارة إلكترونية حديثة مبنية بـ Next.js و Laravel',
 }
 
 export default function RootLayout({
@@ -13,10 +14,20 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body>
-        {children}
-        <Toaster position="top-right" />
+    <html lang="ar" dir="rtl">
+      <body className="font-sans">
+        <NewHeader />
+        <main>{children}</main>
+        <Toaster 
+          position="top-center" 
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: '#363636',
+              color: '#fff',
+            },
+          }}
+        />
       </body>
     </html>
   )
