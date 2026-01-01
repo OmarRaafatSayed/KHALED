@@ -108,7 +108,8 @@ export default function ProductDetailPage() {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
     setIsAddingToCart(false);
-    alert(`تم إضافة ${quantity} من ${mockProduct.name} إلى السلة`);
+    // Redirect to checkout instead of showing alert
+    window.location.href = '/checkout';
   };
 
   const handleAddToWishlist = () => {
@@ -279,11 +280,11 @@ export default function ProductDetailPage() {
                   {isAddingToCart ? (
                     <div className="flex items-center">
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white ml-2"></div>
-                      جاري الإضافة...
+                      جاري الشراء...
                     </div>
                   ) : (
                     <>
-                      🛒 إضافة للسلة
+                      🛍️ اشتري الآن
                     </>
                   )}
                 </button>
