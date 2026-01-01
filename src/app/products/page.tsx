@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useCartStore } from '@/hooks/useCart';
 
 interface Product {
   id: number;
@@ -355,7 +356,23 @@ export default function ProductsPage() {
     </div>
   );
 
-  const ProductCard = ({ product }: { product: Product }) => (
+  const ProductCard = ({ product }: { product: Product }) => {
+    const { addItem } = useCartStore();
+    
+    const handleBuyNow = () => {
+      const cartItem = {
+        id: product.id.toString(),
+        name: product.name,
+        price: product.price,
+        quantity: 1,
+        image: product.image,
+        vendor: product.vendor
+      };
+      addItem(cartItem);
+      window.location.href = '/checkout';
+    };
+    
+    return (
     <div className="bg-white rounded-lg shadow hover:shadow-md transition-shadow">
       <div className="relative">
         <img 
@@ -409,18 +426,30 @@ export default function ProductsPage() {
           بواسطة: {product.vendor}
         </div>
         
-        <button 
-          disabled={!product.inStock}
-          onClick={() => window.location.href = '/checkout'}
-          className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          {product.inStock ? '🛍️ اشتري الآن' : 'غير متوفر'}
-        </button>
+        <Link href={`/products/${product.id}`} className="w-full bg-gray-100 text-gray-700 py-2 rounded-lg hover:bg-gray-200 transition-colors text-center block">
+          تفاصيل المنتج
+        </Link>
       </div>
     </div>
-  );
+  );};
 
-  const ProductListItem = ({ product }: { product: Product }) => (
+  const ProductListItem = ({ product }: { product: Product }) => {
+    const { addItem } = useCartStore();
+    
+    const handleBuyNow = () => {
+      const cartItem = {
+        id: product.id.toString(),
+        name: product.name,
+        price: product.price,
+        quantity: 1,
+        image: product.image,
+        vendor: product.vendor
+      };
+      addItem(cartItem);
+      window.location.href = '/checkout';
+    };
+    
+    return (
     <div className="bg-white rounded-lg shadow p-6 flex items-center space-x-6">
       <img 
         src={product.image} 
@@ -463,16 +492,12 @@ export default function ProductsPage() {
           )}
         </div>
         
-        <button 
-          disabled={!product.inStock}
-          onClick={() => window.location.href = '/checkout'}
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          {product.inStock ? '🛍️ اشتري الآن' : 'غير متوفر'}
-        </button>
+        <Link href={`/products/${product.id}`} className="bg-gray-100 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-200 transition-colors">
+          تفاصيل المنتج
+        </Link>
       </div>
     </div>
-  );
+  );};
 
   return (
     <div className="min-h-screen bg-gray-50">

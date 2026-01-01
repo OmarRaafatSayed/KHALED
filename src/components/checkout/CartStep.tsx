@@ -3,6 +3,8 @@
 import { useCartStore } from '@/hooks/useCart';
 import { Trash2, Plus, Minus } from 'lucide-react';
 
+import Link from 'next/link';
+
 interface CartStepProps {
   onNext: () => void;
 }
@@ -14,9 +16,9 @@ export default function CartStep({ onNext }: CartStepProps) {
     return (
       <div className="text-center py-12">
         <p className="text-gray-500 text-lg mb-4">سلة المشتريات فارغة</p>
-        <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+        <Link href="/products" className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
           تصفح المنتجات
-        </button>
+        </Link>
       </div>
     );
   }

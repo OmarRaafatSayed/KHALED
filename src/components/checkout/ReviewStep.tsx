@@ -12,12 +12,13 @@ export default function ReviewStep({ onBack }: ReviewStepProps) {
   const router = useRouter();
 
   const handlePlaceOrder = async () => {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Clear cart and redirect to success page
-    clearCart();
-    router.push('/checkout/success?orderId=ORD-' + Date.now());
+    const { createOrder } = useCartStore.getState();
+    try {
+      const result = await createOrder();
+      router.push(`/checkout/success?orderId=${result.id || 'ORD-' + Date.now()}`);
+    } catch (error) {
+      alert('حدث خطأ في إنشاء الطلب. يرجى المحاولة مرة أخرى.');
+    }
   };
 
   return (

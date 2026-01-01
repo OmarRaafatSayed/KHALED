@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { useCartStore } from '@/hooks/useCart';
 
 interface Product {
   id: number;
@@ -102,13 +103,25 @@ export default function ProductDetailPage() {
   const [activeTab, setActiveTab] = useState('description');
   const [isZoomed, setIsZoomed] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const { addItem } = useCartStore();
 
   const handleAddToCart = async () => {
     setIsAddingToCart(true);
-    // Simulate API call
+    
+    const cartItem = {
+      id: mockProduct.id.toString(),
+      name: mockProduct.name,
+      price: mockProduct.price,
+      quantity: quantity,
+      image: mockProduct.images[0],
+      vendor: mockProduct.vendor
+    };
+    
+    await addItem(cartItem);
+    
     await new Promise(resolve => setTimeout(resolve, 1000));
     setIsAddingToCart(false);
-    // Redirect to checkout instead of showing alert
+    
     window.location.href = '/checkout';
   };
 
@@ -287,6 +300,24 @@ export default function ProductDetailPage() {
                       🛍️ اشتري الآن
                     </>
                   )}
+                </button>
+
+                <button
+                  onClick={async () => {
+                    const cartItem = {
+                      id: mockProduct.id.toString(),
+                      name: mockProduct.name,
+                      price: mockProduct.price,
+                      quantity: quantity,
+                      image: mockProduct.images[0],
+                      vendor: mockProduct.vendor
+                    };
+                    await addItem(cartItem);
+                    alert('تم إضافة المنتج إلى السلة');
+                  }}
+                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  🛒 إضافة للسلة
                 </button>
 
                 <button
