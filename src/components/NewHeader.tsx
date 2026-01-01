@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useCartStore } from '@/store/cart'
-import { useAuthStore } from '@/store/auth'
+import { useAuth } from '@/hooks/useAuth'
 import { 
   Search, 
   ShoppingCart, 
@@ -20,7 +20,7 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const { itemCount } = useCartStore()
-  const { isAuthenticated, user } = useAuthStore()
+  const { isAuthenticated, user } = useAuth()
 
   const navigation = [
     { name: 'الرئيسية', href: '/' },

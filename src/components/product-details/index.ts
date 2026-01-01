@@ -1,0 +1,5 @@
+export { default as ImageGallery } from './ImageGallery'
+export { default as ProductInfo } from './ProductInfo'
+export { default as ProductTabs } from './ProductTabs'
+export { default as RelatedProducts } from './RelatedProducts'
+export { default as FrequentlyBoughtTogether } from './FrequentlyBoughtTogether'

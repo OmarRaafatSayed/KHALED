@@ -1,107 +1,105 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { CartItem, Product, ProductVariant } from '@/types/marketplace'
-import toast from 'react-hot-toast'
+import { CartItem, Product } from '@/types/marketplace'
 
-interface CartState {
+interface CartStore {
   items: CartItem[]
-  isOpen: boolean
-  total: number
   itemCount: number
-}
-
-interface CartActions {
-  addItem: (product: Product, quantity?: number, variant?: ProductVariant) => void
-  removeItem: (productId: string) => void
-  updateQuantity: (productId: string, quantity: number) => void
+  total: number
+  addItem: (item: Omit<CartItem, 'id'>) => void
+  removeItem: (id: string) => void
+  updateQuantity: (id: string, quantity: number) => void
   clearCart: () => void
-  toggleCart: () => void
-  calculateTotal: () => void
+  getItemById: (id: string) => CartItem | undefined
 }
 
-export const useCartStore = create<CartState & CartActions>()(
+export const useCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
       items: [],
-      isOpen: false,
-      total: 0,
       itemCount: 0,
+      total: 0,
 
-      addItem: (product, quantity = 1, variant) => {
-        const { items } = get()
-        const existingItem = items.find(
-          (item) => item.product.id === product.id && 
-          item.selectedVariant?.id === variant?.id
-        )
-
+      addItem: (newItem) => {
+        const items = get().items
+        const existingItem = items.find(item => item.product.id === newItem.product.id)
+        
         if (existingItem) {
-          get().updateQuantity(product.id, existingItem.quantity + quantity)
-        } else {
-          const newItem: CartItem = {
-            id: `${product.id}-${variant?.id || 'default'}`,
-            product,
-            quantity,
-            selectedVariant: variant,
-          }
-          set((state) => ({
-            items: [...state.items, newItem],
+          // إذا كان المنتج موجود، زيادة الكمية
+          set(state => ({
+            items: state.items.map(item =>
+              item.product.id === newItem.product.id
+                ? { ...item, quantity: item.quantity + newItem.quantity }
+                : item
+            )
           }))
-          get().calculateTotal()
-          toast.success('تم إضافة المنتج للسلة')
+        } else {
+          // إضافة منتج جديد
+          const cartItem: CartItem = {
+            id: `${newItem.product.id}-${Date.now()}`,
+            ...newItem
+          }
+          set(state => ({
+            items: [...state.items, cartItem]
+          }))
         }
+        
+        // تحديث العدد والمجموع
+        const updatedItems = get().items
+        set({
+          itemCount: updatedItems.reduce((sum, item) => sum + item.quantity, 0),
+          total: updatedItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0)
+        })
       },
 
-      removeItem: (productId) => {
-        set((state) => ({
-          items: state.items.filter((item) => item.id !== productId),
-        }))
-        get().calculateTotal()
-        toast.success('تم حذف المنتج من السلة')
+      removeItem: (id) => {
+        set(state => {
+          const newItems = state.items.filter(item => item.id !== id)
+          return {
+            items: newItems,
+            itemCount: newItems.reduce((sum, item) => sum + item.quantity, 0),
+            total: newItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0)
+          }
+        })
       },
 
-      updateQuantity: (productId, quantity) => {
+      updateQuantity: (id, quantity) => {
         if (quantity <= 0) {
-          get().removeItem(productId)
+          get().removeItem(id)
           return
         }
 
-        set((state) => ({
-          items: state.items.map((item) =>
-            item.id === productId ? { ...item, quantity } : item
-          ),
-        }))
-        get().calculateTotal()
+        set(state => {
+          const newItems = state.items.map(item =>
+            item.id === id ? { ...item, quantity } : item
+          )
+          return {
+            items: newItems,
+            itemCount: newItems.reduce((sum, item) => sum + item.quantity, 0),
+            total: newItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0)
+          }
+        })
       },
 
       clearCart: () => {
         set({
           items: [],
-          total: 0,
           itemCount: 0,
+          total: 0
         })
-        toast.success('تم تفريغ السلة')
       },
 
-      toggleCart: () => {
-        set((state) => ({ isOpen: !state.isOpen }))
-      },
-
-      calculateTotal: () => {
-        const { items } = get()
-        const total = items.reduce((sum, item) => {
-          const price = item.selectedVariant?.price || item.product.price
-          return sum + (price * item.quantity)
-        }, 0)
-        const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
-        
-        set({ total, itemCount })
-      },
+      getItemById: (id) => {
+        return get().items.find(item => item.id === id)
+      }
     }),
     {
       name: 'cart-storage',
-      partialize: (state) => ({
+      partialize: (state) => ({ 
         items: state.items,
-      }),
+        itemCount: state.itemCount,
+        total: state.total
+      })
     }
   )
 )

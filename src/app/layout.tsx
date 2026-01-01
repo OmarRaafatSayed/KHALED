@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { Toaster } from 'react-hot-toast'
 import NewHeader from '@/components/NewHeader'
+import Footer from '@/components/Footer'
 
 export const metadata: Metadata = {
   title: 'TailAdmin Marketplace - منصة التجارة الإلكترونية',
@@ -17,7 +18,8 @@ export default function RootLayout({
     <html lang="ar" dir="rtl">
       <body className="font-sans">
         <NewHeader />
-        <main>{children}</main>
+        <main className="min-h-screen">{children}</main>
+        <Footer />
         <Toaster 
           position="top-center" 
           toastOptions={{

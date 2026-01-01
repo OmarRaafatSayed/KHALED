@@ -1,47 +1,43 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { User } from '@/types/marketplace'
-import Cookies from 'js-cookie'
 
-interface AuthState {
+interface User {
+  id: string
+  name: string
+  email: string
+  avatar?: string
+  role: 'customer' | 'vendor' | 'admin'
+}
+
+interface AuthStore {
   user: User | null
   token: string | null
   isAuthenticated: boolean
-  isLoading: boolean
-}
-
-interface AuthActions {
   login: (user: User, token: string) => void
   logout: () => void
-  updateUser: (user: Partial<User>) => void
-  setLoading: (loading: boolean) => void
+  updateUser: (userData: Partial<User>) => void
 }
 
-export const useAuthStore = create<AuthState & AuthActions>()(
+export const useAuthStore = create<AuthStore>()(
   persist(
     (set, get) => ({
       user: null,
       token: null,
       isAuthenticated: false,
-      isLoading: false,
 
       login: (user, token) => {
-        Cookies.set('auth-token', token, { expires: 7 })
         set({
           user,
           token,
-          isAuthenticated: true,
-          isLoading: false,
+          isAuthenticated: true
         })
       },
 
       logout: () => {
-        Cookies.remove('auth-token')
         set({
           user: null,
           token: null,
-          isAuthenticated: false,
-          isLoading: false,
+          isAuthenticated: false
         })
       },
 
@@ -49,22 +45,18 @@ export const useAuthStore = create<AuthState & AuthActions>()(
         const currentUser = get().user
         if (currentUser) {
           set({
-            user: { ...currentUser, ...userData },
+            user: { ...currentUser, ...userData }
           })
         }
-      },
-
-      setLoading: (loading) => {
-        set({ isLoading: loading })
-      },
+      }
     }),
     {
       name: 'auth-storage',
       partialize: (state) => ({
         user: state.user,
         token: state.token,
-        isAuthenticated: state.isAuthenticated,
-      }),
+        isAuthenticated: state.isAuthenticated
+      })
     }
   )
 )

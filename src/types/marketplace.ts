@@ -126,6 +126,50 @@ export interface PaginatedResponse<T> {
   }
 }
 
+// Job Types
+export interface Job {
+  id: string
+  title: string
+  company: string
+  companyLogo?: string
+  location: string
+  type: 'full-time' | 'part-time' | 'contract' | 'remote'
+  salary: string
+  description: string
+  requirements: string[]
+  benefits?: string[]
+  postedAt: string
+  expiresAt: string
+  applications: number
+}
+
+export interface JobApplication {
+  id: string
+  jobId: string
+  applicantName: string
+  applicantEmail: string
+  applicantPhone: string
+  coverLetter: string
+  resumeUrl: string
+  appliedAt: string
+  status: 'pending' | 'reviewed' | 'accepted' | 'rejected'
+}
+
+// FAQ Types
+export interface FAQ {
+  id: string
+  question: string
+  answer: string
+  category: string
+}
+
+export interface FAQCategory {
+  id: string
+  name: string
+  icon: string
+  faqs: FAQ[]
+}
+
 // Filter Types
 export interface ProductFilters {
   category?: string
