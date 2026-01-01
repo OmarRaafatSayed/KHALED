@@ -1,11 +1,27 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCartStore } from '@/hooks/useCart';
 
 export default function OrderSummary() {
+  const [mounted, setMounted] = useState(false);
   const { items, discountCode, discountAmount, getSubtotal, getTotal, applyDiscount } = useCartStore();
   const [couponCode, setCouponCode] = useState('');
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="bg-white p-6 rounded-lg shadow-lg sticky top-4">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">ملخص الطلب</h3>
+        <div className="space-y-3 mb-4">
+          <div className="text-sm text-gray-600">جاري التحميل...</div>
+        </div>
+      </div>
+    );
+  }
 
   const subtotal = getSubtotal();
   const shipping = 50;
@@ -24,7 +40,7 @@ export default function OrderSummary() {
         {items.map((item) => (
           <div key={item.id} className="flex justify-between text-sm">
             <span className="text-gray-600">{item.name} × {item.quantity}</span>
-            <span className="font-medium">{(item.price * item.quantity).toFixed(2)} ر.س</span>
+            <span className="font-medium">{((item.price || 0) * item.quantity).toFixed(2)} ر.س</span>
           </div>
         ))}
       </div>

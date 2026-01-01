@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useCartStore } from '@/hooks/useCart';
 import { Trash2, Plus, Minus } from 'lucide-react';
 
@@ -10,7 +11,20 @@ interface CartStepProps {
 }
 
 export default function CartStep({ onNext }: CartStepProps) {
+  const [mounted, setMounted] = useState(false);
   const { items, updateQuantity, removeItem, clearCart } = useCartStore();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-500 text-lg mb-4">جاري التحميل...</p>
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (
@@ -49,7 +63,7 @@ export default function CartStep({ onNext }: CartStepProps) {
               <h3 className="font-medium text-gray-900">{item.name}</h3>
               <p className="text-sm text-gray-500">البائع: {item.vendor}</p>
               <p className="text-lg font-semibold text-blue-600 mt-1">
-                {item.price.toFixed(2)} ر.س
+                {(item.price || 0).toFixed(2)} ر.س
               </p>
             </div>
 
@@ -73,7 +87,7 @@ export default function CartStep({ onNext }: CartStepProps) {
 
             <div className="text-right">
               <p className="font-semibold text-lg">
-                {(item.price * item.quantity).toFixed(2)} ر.س
+                {((item.price || 0) * item.quantity).toFixed(2)} ر.س
               </p>
               <button
                 onClick={() => removeItem(item.id)}

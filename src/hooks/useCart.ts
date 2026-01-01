@@ -66,13 +66,13 @@ export const useCartStore = create<CartStore>()(persist((set, get) => ({
   setPaymentMethod: (method) => set({ paymentMethod: method }),
 
   applyDiscount: (code) => set((state) => {
-    const discountAmount = code === 'SAVE10' ? state.items.reduce((sum, item) => sum + (item.price * item.quantity), 0) * 0.1 : 0;
+    const discountAmount = code === 'SAVE10' ? state.items.reduce((sum, item) => sum + ((item.price || 0) * item.quantity), 0) * 0.1 : 0;
     return { discountCode: code, discountAmount };
   }),
 
   getSubtotal: () => {
     const state = get();
-    return state.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    return state.items.reduce((sum, item) => sum + ((item.price || 0) * item.quantity), 0);
   },
 
   getTotal: () => {
