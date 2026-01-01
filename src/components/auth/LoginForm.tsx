@@ -57,9 +57,17 @@ export default function LoginForm() {
       // محاولة تسجيل الدخول عبر API
       await login(formData.email, formData.password)
       
-      // التوجيه للصفحة المطلوبة أو الرئيسية
-      const redirectTo = searchParams.get('redirect') || '/'
-      router.push(redirectTo)
+      // الحصول على بيانات المستخدم
+      const userData = JSON.parse(localStorage.getItem('user') || '{}')
+      
+      // توجيه حسب نوع المستخدم
+      if (userData.role === 'admin') {
+        router.push('/admin-dashboard')
+      } else if (userData.role === 'vendor') {
+        router.push('/vendor-dashboard')
+      } else {
+        router.push('/dashboard')
+      }
     } catch (error: any) {
       setErrors({ general: error.message || 'البريد الإلكتروني أو كلمة المرور غير صحيحة' })
     } finally {

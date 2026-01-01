@@ -29,11 +29,23 @@ export function useAuth() {
   const login = async (email: string, password: string) => {
     await new Promise(resolve => setTimeout(resolve, 1000))
     
+    let role = 'customer'
+    let name = 'مستخدم تجريبي'
+    
+    // تحديد نوع المستخدم حسب البريد
+    if (email === 'admin@tailadmin.com') {
+      role = 'admin'
+      name = 'Admin User'
+    } else if (email === 'vendor@tailadmin.com') {
+      role = 'vendor'
+      name = 'Vendor User'
+    }
+    
     const userData: User = {
       id: '1',
-      name: 'مستخدم تجريبي',
+      name,
       email,
-      role: 'customer'
+      role
     }
     
     setUser(userData)

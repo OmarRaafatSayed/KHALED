@@ -8,6 +8,7 @@ import {
   MapPin, 
   Heart,
   Briefcase,
+  BookOpen,
   LogOut
 } from 'lucide-react';
 
@@ -16,7 +17,8 @@ const menuItems = [
   { href: '/dashboard/profile', label: 'الملف الشخصي', icon: User },
   { href: '/dashboard/addresses', label: 'العناوين', icon: MapPin },
   { href: '/dashboard/wishlist', label: 'المفضلة', icon: Heart },
-  { href: '/dashboard/jobs', label: 'طلبات التوظيف', icon: Briefcase },
+  { href: '/dashboard/jobs', label: 'مركز الوظائف', icon: Briefcase },
+  { href: '/dashboard/knowledge', label: 'مركز المعرفة', icon: BookOpen },
 ];
 
 export default function DashboardSidebar() {

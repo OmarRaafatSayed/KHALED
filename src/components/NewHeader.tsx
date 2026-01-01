@@ -103,9 +103,11 @@ export default function Header() {
             {/* User Menu */}
             {isAuthenticated ? (
               <div className="flex items-center space-x-2 space-x-reverse">
-                <Button variant="ghost" size="icon">
-                  <User className="h-6 w-6" />
-                </Button>
+                <Link href="/dashboard">
+                  <Button variant="ghost" size="icon">
+                    <User className="h-6 w-6" />
+                  </Button>
+                </Link>
                 <span className="hidden md:block text-sm font-medium">
                   مرحباً، {user?.name}
                 </span>

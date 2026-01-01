@@ -1,157 +1,63 @@
-'use client'
+'use client';
 
-import { useEffect, useState } from 'react'
-import { CheckCircle, Package, Truck, Eye, Download, Share2 } from 'lucide-react'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
+import { useSearchParams } from 'next/navigation';
+import { CheckCircle, Package, Truck } from 'lucide-react';
+import Link from 'next/link';
 
-export default function OrderSuccessPage() {
-  const [orderId] = useState('ORD-2024-001234')
-  const [estimatedDelivery] = useState('3-5 أيام عمل')
-
-  useEffect(() => {
-    // إرسال تأكيد الطلب عبر البريد الإلكتروني
-    // تحديث حالة السلة
-    // إرسال إشعارات
-  }, [])
+export default function CheckoutSuccessPage() {
+  const searchParams = useSearchParams();
+  const orderId = searchParams.get('orderId') || 'ORD-123456';
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container py-12">
-        <div className="max-w-2xl mx-auto">
-          {/* Success Icon */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-4">
-              <CheckCircle className="h-12 w-12 text-green-600" />
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              تم تأكيد طلبك بنجاح! 🎉
-            </h1>
-            <p className="text-lg text-gray-600">
-              شكراً لك على ثقتك بنا. سنقوم بمعالجة طلبك في أقرب وقت ممكن.
-            </p>
-          </div>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+        <div className="mb-6">
+          <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            تم تأكيد طلبك بنجاح!
+          </h1>
+          <p className="text-gray-600">
+            شكراً لك على الشراء من متجرنا
+          </p>
+        </div>
 
-          {/* Order Details Card */}
-          <div className="bg-white rounded-lg border shadow-sm p-6 mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">تفاصيل الطلب</h2>
-              <span className="bg-green-100 text-green-600 px-3 py-1 rounded-full text-sm font-medium">
-                مؤكد
-              </span>
-            </div>
+        <div className="bg-gray-50 rounded-lg p-4 mb-6">
+          <p className="text-sm text-gray-600 mb-1">رقم الطلب</p>
+          <p className="text-lg font-semibold text-gray-900">{orderId}</p>
+        </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="font-medium text-gray-900 mb-2">رقم الطلب</h3>
-                <p className="text-2xl font-bold text-primary">{orderId}</p>
-              </div>
-              
-              <div>
-                <h3 className="font-medium text-gray-900 mb-2">موعد التوصيل المتوقع</h3>
-                <p className="text-lg text-gray-700">{estimatedDelivery}</p>
-              </div>
-              
-              <div>
-                <h3 className="font-medium text-gray-900 mb-2">المبلغ الإجمالي</h3>
-                <p className="text-xl font-bold text-gray-900">6,782 ريال</p>
-              </div>
-              
-              <div>
-                <h3 className="font-medium text-gray-900 mb-2">طريقة الدفع</h3>
-                <p className="text-gray-700">بطاقة ائتمانية **** 3456</p>
-              </div>
-            </div>
+        <div className="space-y-4 mb-8">
+          <div className="flex items-center gap-3 text-sm text-gray-600">
+            <Package className="w-5 h-5 text-blue-500" />
+            <span>سيتم تحضير طلبك خلال 24 ساعة</span>
           </div>
+          <div className="flex items-center gap-3 text-sm text-gray-600">
+            <Truck className="w-5 h-5 text-green-500" />
+            <span>التوصيل خلال 2-3 أيام عمل</span>
+          </div>
+        </div>
 
-          {/* Next Steps */}
-          <div className="bg-white rounded-lg border shadow-sm p-6 mb-6">
-            <h3 className="text-lg font-semibold mb-4">الخطوات التالية</h3>
-            
-            <div className="space-y-4">
-              <div className="flex items-start space-x-3 space-x-reverse">
-                <div className="bg-blue-100 p-2 rounded-full">
-                  <Package className="h-5 w-5 text-blue-600" />
-                </div>
-                <div>
-                  <h4 className="font-medium text-gray-900">تحضير الطلب</h4>
-                  <p className="text-sm text-gray-600">
-                    سنقوم بتحضير وتغليف منتجاتك بعناية فائقة
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex items-start space-x-3 space-x-reverse">
-                <div className="bg-yellow-100 p-2 rounded-full">
-                  <Truck className="h-5 w-5 text-yellow-600" />
-                </div>
-                <div>
-                  <h4 className="font-medium text-gray-900">الشحن والتوصيل</h4>
-                  <p className="text-sm text-gray-600">
-                    سيتم شحن طلبك وتوصيله إلى العنوان المحدد
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex items-start space-x-3 space-x-reverse">
-                <div className="bg-green-100 p-2 rounded-full">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
-                </div>
-                <div>
-                  <h4 className="font-medium text-gray-900">استلام الطلب</h4>
-                  <p className="text-sm text-gray-600">
-                    استلم طلبك واستمتع بمنتجاتك الجديدة
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div className="space-y-3">
+          <Link
+            href={`/orders/${orderId}`}
+            className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors inline-block"
+          >
+            تتبع الطلب
+          </Link>
+          <Link
+            href="/"
+            className="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-200 transition-colors inline-block"
+          >
+            العودة للرئيسية
+          </Link>
+        </div>
 
-          {/* Action Buttons */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <Link href={`/orders/${orderId}`}>
-              <Button className="w-full" size="lg">
-                <Eye className="h-4 w-4 ml-2" />
-                تتبع الطلب
-              </Button>
-            </Link>
-            
-            <Button variant="outline" className="w-full" size="lg">
-              <Download className="h-4 w-4 ml-2" />
-              تحميل الفاتورة
-            </Button>
-          </div>
-
-          {/* Additional Actions */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/products">
-              <Button variant="outline">
-                متابعة التسوق
-              </Button>
-            </Link>
-            
-            <Button variant="outline">
-              <Share2 className="h-4 w-4 ml-2" />
-              مشاركة
-            </Button>
-          </div>
-
-          {/* Contact Info */}
-          <div className="mt-8 text-center">
-            <p className="text-sm text-gray-600 mb-2">
-              هل تحتاج مساعدة؟ تواصل معنا
-            </p>
-            <div className="flex justify-center space-x-4 space-x-reverse text-sm">
-              <a href="tel:+966501234567" className="text-primary hover:underline">
-                📞 +966 50 123 4567
-              </a>
-              <a href="mailto:support@tailadmin.com" className="text-primary hover:underline">
-                ✉️ support@tailadmin.com
-              </a>
-            </div>
-          </div>
+        <div className="mt-8 pt-6 border-t border-gray-200">
+          <p className="text-xs text-gray-500">
+            سيتم إرسال تفاصيل الطلب إلى بريدك الإلكتروني
+          </p>
         </div>
       </div>
     </div>
-  )
+  );
 }
